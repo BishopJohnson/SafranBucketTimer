@@ -1,0 +1,427 @@
+<MyWidget>
+    # The Id's for the widgets modified during runtime
+    clock: clock
+    pause_text: pause_text
+    bucket_1: bucket_1
+    bucket_2: bucket_2
+    bucket_3: bucket_3
+    bucket_4: bucket_4
+    bucket_5: bucket_5
+    time_1: time_1
+    time_2: time_2
+    time_3: time_3
+    time_4: time_4
+    time_5: time_5
+    time_avg: time_avg
+    start: new
+    finish: finish
+    cancel: cancel
+    bkt_curr_name: bkt_curr_name
+    bkt_curr_time: bkt_curr_time
+    bkt_goal_time: bkt_goal_time
+
+    # The main layout of the app
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Date and time
+        Label:
+            id: clock
+            pos_hint: {'x': 0.65, 'y': 0.05}
+            size_hint: 0.2, 0.2
+            text: 'hh:mm am    mm/dd/yyyy'
+            bold: 1
+            font_size: 28
+            color: 0, 0, 0, 1
+
+        # Break text
+        Label:
+            id: pause_text
+            pos_hint: {'x': 0.15, 'y': 0.425}
+            size_hint: 0.2, 0.2
+            text: ''
+            bold: 1
+            font_size: 24
+            color: 1, 0, 0, 1
+
+        # The grid layout for the bucket time table
+        GridLayout:
+            rows: 2
+            cols: 2
+            pos_hint: {'x': 0.05, 'y': 0.6}
+            size_hint: 0.4, 0.2
+            spacing: 3, 0
+
+            # Label for the current bucket's name
+            Label:
+                id: bkt_curr_name
+                text: 'CURRENT ()'
+                bold: 1
+                font_size: 18
+                color: 1, 1, 1, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.357, 0.608, 0.835, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            # Label for the goal column
+            Label:
+                text: 'GOAL'
+                bold: 1
+                font_size: 18
+                color: 1, 1, 1, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.357, 0.608, 0.835, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            # Label for the current bucket's time
+            Label:
+                id: bkt_curr_time
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            # Label for the goal time
+            Label:
+                id: bkt_goal_time
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        Image:
+            source: 'img/logo.png'
+            pos_hint: {'x': 0.05, 'y': 0.75}
+            size_hint: 0.3, 0.3
+
+        Label:
+            pos_hint: {'x': 0.65, 'y': 0.775}
+            size_hint: 0.2, 0.2
+            text: 'BACKSHOP\'S BUCKET TIME TRACKER'
+            bold: 1
+            font_size: 18
+            color: 0, 0, 0, 1
+
+        Button
+            id: new
+            pos_hint: {'x': 0.075, 'y': 0.3}
+            size_hint: 0.15, 0.15
+            text: 'NEW BUCKET'
+            bold: 1
+            font_size: 14
+            background_normal: ''  # Removes the gray tint
+            background_color: 0.357, 0.608, 0.835, 1
+            on_release: root.show_keypad(self)
+
+        Button
+            id: finish
+            pos_hint: {'x': 0.275, 'y': 0.3}
+            size_hint: 0.15, 0.15
+            text: 'FINISH BUCKET'
+            bold: 1
+            font_size: 14
+            background_normal: ''  # Removes the gray tint
+            background_color: 0.357, 0.608, 0.835, 1
+            on_release: app.finish_bucket()
+
+        Button
+            id: cancel
+            pos_hint: {'x': 0.275, 'y': 0.1}
+            size_hint: 0.15, 0.15
+            text: 'CANCEL BUCKET'
+            bold: 1
+            font_size: 14
+            background_normal: ''  # Removes the gray tint
+            background_color: 0.357, 0.608, 0.835, 1
+            on_release: app.cancel_bucket()
+
+        GridLayout:
+            rows: 7
+            cols: 2
+            pos_hint: {'x': 0.55, 'y': 0.3}
+            size_hint: 0.4, 0.5
+            spacing: 3, 0
+
+            Label:
+                text: 'BUCKET NUMBER'
+                bold: 1
+                font_size: 18
+                color: 1, 1, 1, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.357, 0.608, 0.835, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                text: 'ACTUAL TIME'
+                bold: 1
+                font_size: 18
+                color: 1, 1, 1, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.357, 0.608, 0.835, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: bucket_5
+                text: ''
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_5
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: bucket_4
+                text: ''
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_4
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: bucket_3
+                text: ''
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_3
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: bucket_2
+                text: ''
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_2
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: bucket_1
+                text: ''
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_1
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.815, 0.871, 0.937, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                text: 'AVERAGE'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: time_avg
+                text: '0.00 Hrs'
+                bold: 1
+                font_size: 18
+                color: 0, 0, 0, 1
+                canvas.before:
+                    Color:
+                        rgba: 0.914, 0.937, 0.968, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+
+<Keypad>
+    arrow_pos: 'top_mid'
+    width: 160
+    height: 140
+
+    GridLayout:
+        rows: 4
+        cols: 3
+
+        Button:
+            id: btn_1
+            text: '1'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_2
+            text: '2'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_3
+            text: '3'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_4
+            text: '4'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_5
+            text: '5'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_6
+            text: '6'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_7
+            text: '7'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_8
+            text: '8'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_9
+            text: '9'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_cancel
+            text: 'cancel'
+            bold: 1
+            on_release: app.cancel_bucket_name()
+
+        Button:
+            id: btn_0
+            text: '0'
+            bold: 1
+            on_release: app.append_bucket_name(self.text)
+
+        Button:
+            id: btn_enter
+            text: 'enter'
+            bold: 1
+            on_release: app.enter_bucket_name()
