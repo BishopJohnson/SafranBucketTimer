@@ -4,7 +4,7 @@
 /__pycache__
 
 # IDE files
-**.idea/**
+/.idea
 
 # Data files
 *.csv
