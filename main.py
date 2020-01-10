@@ -1,4 +1,5 @@
 from define import *
+from fileprocessing import *
 from timer import Timer
 from keypad import Keypad
 from popup import NameWarning
@@ -9,7 +10,6 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.floatlayout import FloatLayout
 from math import floor
-from pathlib import Path
 
 
 def hours_minutes_seconds(seconds):
@@ -44,28 +44,27 @@ class MyWidget(FloatLayout):
 class MyApp(App):
     def __init__(self):
         super(MyApp, self).__init__()
-        self.buckets = list()
-        self.bucket_running = False
-        self.current_bucket = ''
-        self.goal = 14760  # 14760 seconds is equal to 4.1 hours
-        self.is_break = False
-        self.is_running = True  # Boolean stating that the app is running
-        self.named = False
-        self.size = 0
-        self.timer = Timer()
-        self.times = list()
+        self.__bucket_running = False
+        self.__buckets = list()
+        self.__current_bucket = ''
         self.__clock_event = None
+        self.__goal = 14760  # 14760 seconds is equal to 4.1 hours
         self.__gui = None
+        self.__is_break = False
+        self.__max_size = 5
+        self.__size = 0
         self.__time_end = None
         self.__time_start = None
+        self.__timer = Timer()
+        self.__times = list()
 
     def append_bucket_name(self, digit):
-        # Checks if the length is less than six
-        if len(self.current_bucket) < 6:
-            self.current_bucket += str(digit)
+        # Checks if the name length is less than six
+        if len(self.__current_bucket) < 6:
+            self.__current_bucket += str(digit)
 
             # Updates the bucket name in the UI
-            self.__gui.bkt_curr_name.text = 'CURRENT ({})'.format(self.current_bucket)
+            self.__gui.bkt_curr_name.text = 'CURRENT ({})'.format(self.__current_bucket)
 
     def build(self):
         self.__gui = MyWidget()
@@ -74,9 +73,9 @@ class MyApp(App):
 
     def cancel_bucket(self):
         # Check if a bucket is running
-        if self.bucket_running:
+        if self.__bucket_running:
             # Updates internal values
-            self.bucket_running = False
+            self.__bucket_running = False
 
             # Update button states
             self.__gui.start.disabled = False
@@ -100,9 +99,9 @@ class MyApp(App):
 
     def finish_bucket(self):
         # Check if a bucket is running
-        if self.bucket_running:
+        if self.__bucket_running:
             # Updates internal values
-            self.bucket_running = False
+            self.__bucket_running = False
 
             # Update button states
             self.__gui.start.disabled = False
@@ -112,7 +111,7 @@ class MyApp(App):
             self.__time_end = datetime.now()
 
             # Updates table
-            self.__update_table(self.current_bucket, self.timer.get_time())
+            self.__update_table(self.__current_bucket, self.__timer.get_time())
 
             # Logs the bucket statistics
             self.__log_times()
@@ -122,8 +121,11 @@ class MyApp(App):
     def on_start(self):
         # TODO: Check if "Alpha Numberic Bucket Numbers.csv" is present and if not then display message.
 
+        # Create data file
+        create_data_file()
+
         # Goal for time with only hours
-        self.__gui.bkt_goal_time.text = '{:.2f} Hrs'.format(self.goal / SEC_PER_HOUR)
+        self.__gui.bkt_goal_time.text = '{:.2f} Hrs'.format(self.__goal / SEC_PER_HOUR)
 
         # Set initial button states
         self.__gui.start.disabled = False
@@ -133,37 +135,38 @@ class MyApp(App):
         # Schedule the clock event
         self.__clock_event = Clock.schedule_interval(self.update, 0)
 
-    def on_stop(self):
-        self.is_running = False
+        # Set the bucket and time lists as lists of past data
+        self.__recent_buckets()
 
+    def on_stop(self):
         # Unschedule the clock event
         self.__clock_event.cancel()
 
     def start_bucket(self):
         # Checks if a bucket is already running
-        if not self.bucket_running:
+        if not self.__bucket_running:
             # Updates internal values
-            self.bucket_running = True
+            self.__bucket_running = True
 
             # Update button states
             self.__gui.start.disabled = True
             self.__gui.finish.disabled = False
             self.__gui.cancel.disabled = False
 
-            self.timer.start()
+            self.__timer.start()
             self.__time_start = datetime.now()
 
     def update(self, dt):
         # Handles the bucket timer
-        if self.bucket_running:
+        if self.__bucket_running:
             # Checks if a break is scheduled
-            if not self.is_break:
+            if not self.__is_break:
                 # Time keeping with hours, minutes, and seconds
-                # (hours, minutes, seconds) = hours_minutes_seconds(self.timer.current())
+                # (hours, minutes, seconds) = hours_minutes_seconds(self.__timer.current())
                 # self.__gui.bkt_curr_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
 
                 # Time keeping with only hours
-                self.__gui.bkt_curr_time.text = '{:.2f} Hrs'.format(self.timer.current() / SEC_PER_HOUR)
+                self.__gui.bkt_curr_time.text = '{:.2f} Hrs'.format(self.__timer.current() / SEC_PER_HOUR)
 
         # Handles the clock
         self.__scheduled_break()  # Run function for breaks
@@ -195,18 +198,18 @@ class MyApp(App):
                                                                                   year)
 
     def __pause_break(self):
-        self.is_break = True
+        self.__is_break = True
         self.__gui.pause_text.text = BREAK_TEXT
 
     def __check_bucket_name(self):
         try:
-            with open(DATA_FILE, newline='') as data_file:
+            with open(NAMES_FILE, newline='') as data_file:
                 reader = csv.reader(data_file, delimiter=',')
 
                 # Iterates for each row in the data file
                 for row in reader:
                     # Checks if the bucket name exists in the data file
-                    if row[0] == self.current_bucket:
+                    if row[0] == self.__current_bucket:
                         return True
         except FileNotFoundError:
             return True  # Return true if the file cannot be found
@@ -214,27 +217,49 @@ class MyApp(App):
         return False  # Return false if the bucket name was not found
 
     def __log_times(self):
-        flag = 'a'  # Assume file will be appended to
+        # Create the log file if it does not exist
+        create_log_file()
 
-        # Checks if the file does not exist
-        if not Path(LOG_NAME).exists():
-            flag = 'w'
-
-        with open(LOG_NAME, flag, newline='') as log:
+        with open(LOG_FILE, 'a', newline='') as log:
             writer = csv.writer(log, delimiter=',')
 
-            # Checks if header row needs to be created
-            if flag == 'w':
-                writer.writerow(['bucket_number', 'work_time', 'start_date', 'end_date'])
-
-            writer.writerow([self.current_bucket,
-                             '{:.2f} Hrs'.format(self.timer.get_time() / SEC_PER_HOUR),
+            writer.writerow([self.__current_bucket,
+                             '{:.2f} Hrs'.format(self.__timer.get_time() / SEC_PER_HOUR),
+                             self.__timer.get_time(),
                              self.__time_start,
                              self.__time_end])
 
+    def __recent_buckets(self):
+        count = 0
+        buckets = list()
+        times = list()
+
+        try:
+            with open(LOG_FILE, newline='') as data_file:
+                reader = csv.reader(data_file, delimiter=',')
+
+                next(reader)  # Skips the headers
+
+                # Gets the bucket names and times (sec)
+                for row in reader:
+                    buckets.append(row[0])
+                    times.append(row[2])
+                    count += 1
+        except FileNotFoundError:
+            print("No log file to get recent bucket times from.")
+
+            # Create the log file if it does not exist
+            create_log_file()
+        finally:
+            # Iterates over the last few desired entries and adds them to the table
+            i = max(0, count - self.__max_size)
+            while i < count:
+                self.__update_table(str(buckets[i]), int(times[i]))
+                i += 1
+
     def __reset_bucket(self):
         # Reverts to default state
-        self.current_bucket = ''
+        self.__current_bucket = ''
         self.__gui.bkt_curr_name.text = 'CURRENT ()'
         self.__gui.bkt_curr_time.text = '0.00 Hrs'
 
@@ -288,11 +313,11 @@ class MyApp(App):
                     self.__pause_break()
                 else:  # No break
                     # Checks if a break has just ended
-                    if self.is_break:
-                        self.timer.reset()
+                    if self.__is_break:
+                        self.__timer.reset()
                         self.__gui.pause_text.text = ''
 
-                    self.is_break = False
+                    self.__is_break = False
             elif weekday == 4:  # Friday
                 if hour == 8 and minute in range(15, 30):  # (8:15 am) 15 min break
                     self.__pause_break()
@@ -310,24 +335,24 @@ class MyApp(App):
                     self.__pause_break()
                 else:  # No break
                     # Checks if a break has just ended
-                    if self.is_break:
-                        self.timer.reset()
+                    if self.__is_break:
+                        self.__timer.reset()
                         self.__gui.pause_text.text = ''
 
-                    self.is_break = False
+                    self.__is_break = False
             else:  # Pause on weekends
                 self.__pause_break()
 
     def __update_table(self, name, time):
         # Checks if the table is not full
-        if self.size < 5:
-            self.size += 1  # Increments size
+        if self.__size < self.__max_size:
+            self.__size += 1
         else:
-            self.buckets.pop(4)  # Removes elements at the
-            self.times.pop(4)    # end of the lists.
+            self.__buckets.pop(self.__max_size - 1)  # Removes elements at the
+            self.__times.pop(self.__max_size - 1)    # end of the lists.
 
-        self.buckets.insert(0, name)  # Inserts elements at the
-        self.times.insert(0, time)    # front of the lists.
+        self.__buckets.insert(0, name)  # Inserts elements at the
+        self.__times.insert(0, time)    # front of the lists.
 
         # Precompiles the labels into parallel arrays
         gui = self.__gui
@@ -339,11 +364,11 @@ class MyApp(App):
         time_sum = 0
 
         # Iterates for each row in the table
-        for i in range(0, 5):
+        for i in range(0, self.__max_size):
             # Checks if the row has an entry
-            if i < self.size:
-                name = self.buckets[i]
-                time = self.times[i]
+            if i < self.__size:
+                name = self.__buckets[i]
+                time = self.__times[i]
                 count += 1
                 time_sum += time
             else:
