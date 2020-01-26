@@ -1,6 +1,7 @@
-<MyWidget>
+<MyWidget>:
     # The Id's for the widgets modified during runtime
     clock: clock
+    no_assigned_break_text: no_assigned_break_text
     pause_text: pause_text
     bucket_1: bucket_1
     bucket_2: bucket_2
@@ -13,9 +14,9 @@
     time_4: time_4
     time_5: time_5
     time_avg: time_avg
-    start: new
-    finish: finish
-    cancel: cancel
+    start_btn: start_btn
+    finish_btn: finish_btn
+    cancel_btn: cancel_btn
     bkt_curr_name: bkt_curr_name
     bkt_curr_time: bkt_curr_time
     bkt_goal_time: bkt_goal_time
@@ -39,12 +40,22 @@
             font_size: 28
             color: 0, 0, 0, 1
 
-        # Break text
+        # No assigned break text
+        Label:
+            id: no_assigned_break_text
+            pos_hint: {'x': 0.15, 'y': 0.45}
+            size_hint: 0.2, 0.2
+            text: 'WARNING: NO ASSIGNED BREAK'
+            bold: 1
+            font_size: 24
+            color: 1, 0, 0, 1
+
+        # Break time text
         Label:
             id: pause_text
             pos_hint: {'x': 0.15, 'y': 0.45}
             size_hint: 0.2, 0.2
-            text: ''
+            text: 'TRACKER PAUSED FOR BREAK'
             bold: 1
             font_size: 24
             color: 1, 0, 0, 1
@@ -125,37 +136,25 @@
             font_size: 18
             color: 0, 0, 0, 1
 
-        Button
-            id: new
+        # New bucket button
+        MyWidgetBtn:
+            id: start_btn
             pos_hint: {'x': 0.075, 'y': 0.35}
-            size_hint: 0.15, 0.15
             text: 'NEW BUCKET'
-            bold: 1
-            font_size: 14
-            background_normal: ''  # Removes the gray tint
-            background_color: 0.357, 0.608, 0.835, 1
             on_release: root.show_keypad(self)
 
-        Button
-            id: finish
-            pos_hint: {'x': 0.3, 'y': 0.35}
-            size_hint: 0.15, 0.15
+        # Finish bucket button
+        MyWidgetBtn:
+            id: finish_btn
+            pos_hint: {'x': 0.275, 'y': 0.35}
             text: 'FINISH BUCKET'
-            bold: 1
-            font_size: 14
-            background_normal: ''  # Removes the gray tint
-            background_color: 0.357, 0.608, 0.835, 1
             on_release: app.finish_bucket()
 
-        Button
-            id: cancel
-            pos_hint: {'x': 0.3, 'y': 0.1}
-            size_hint: 0.15, 0.15
+        # Cancel bucket button
+        MyWidgetBtn:
+            id: cancel_btn
+            pos_hint: {'x': 0.275, 'y': 0.1}
             text: 'CANCEL BUCKET'
-            bold: 1
-            font_size: 14
-            background_normal: ''  # Removes the gray tint
-            background_color: 0.357, 0.608, 0.835, 1
             on_release: app.cancel_bucket()
 
         GridLayout:
@@ -189,163 +188,55 @@
                         pos: self.pos
                         size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: bucket_5
                 text: ''
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: time_5
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 id: bucket_4
                 text: ''
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 id: time_4
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: bucket_3
                 text: ''
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: time_3
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 id: bucket_2
                 text: ''
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 id: time_2
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: bucket_1
                 text: ''
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText1:
                 id: time_1
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 text: 'AVERAGE'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            Label:
+            MyWidgetBktTableText2:
                 id: time_avg
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.914, 0.937, 0.968, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
 
-<Keypad>
+<Keypad>:
     arrow_pos: 'top_mid'
     width: 180
     height: 180
@@ -354,79 +245,48 @@
         rows: 4
         cols: 3
 
-        Button:
-            id: btn_1
+        KeypadBtn:
             text: '1'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_2
+        KeypadBtn:
             text: '2'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_3
+        KeypadBtn:
             text: '3'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_4
+        KeypadBtn:
             text: '4'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_5
+        KeypadBtn:
             text: '5'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_6
+        KeypadBtn:
             text: '6'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_7
+        KeypadBtn:
             text: '7'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_8
+        KeypadBtn:
             text: '8'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
-        Button:
-            id: btn_9
+        KeypadBtn:
             text: '9'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
         Button:
-            id: btn_cancel
             text: 'cancel'
             bold: 1
             on_release: app.cancel_bucket_name()
 
-        Button:
-            id: btn_0
+        KeypadBtn:
             text: '0'
-            bold: 1
-            on_release: app.append_bucket_name(self.text)
 
         Button:
-            id: btn_enter
             text: 'enter'
             bold: 1
             on_release: app.enter_bucket_name()
 
-<NameWarning>
+
+<NameWarning>:
     size_hint: 0.8, 0.6
     auto_dismiss: False
     title: 'BUCKET NAME WARNING'
@@ -454,3 +314,40 @@
             bold: 1
             font_size: 24
             on_release: root.cancel()
+
+
+<MyWidgetBtn@Button>:
+    size_hint: 0.15, 0.15
+    bold: 1
+    font_size: 14
+    background_normal: ''  # Removes the gray tint
+    background_color: 0.357, 0.608, 0.835, 1
+
+
+<MyWidgetBktTableText1@Label>:
+    bold: 1
+    font_size: 18
+    color: 0, 0, 0, 1
+    canvas.before:
+        Color:
+            rgba: 0.815, 0.871, 0.937, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<MyWidgetBktTableText2@Label>:
+    bold: 1
+    font_size: 18
+    color: 0, 0, 0, 1
+    canvas.before:
+        Color:
+            rgba: 0.914, 0.937, 0.968, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<KeypadBtn@Button>:
+    bold: 1
+    on_release: app.append_bucket_name(self.text)

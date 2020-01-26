@@ -1,15 +1,43 @@
+# Custom packages
 from define import *
 from fileprocessing import *
-from timer import Timer
+from clock import Clock as Clk
 from keypad import Keypad
 from popup import NameWarning
+from workbreak import WorkBreak
 
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from kivy.app import App
-from kivy.clock import Clock
+from kivy.clock import Clock as ClkEvent
 from kivy.uix.floatlayout import FloatLayout
 from math import floor
+from operator import attrgetter
+
+
+def create_break_list(days=14):
+    data = import_data_file()
+    brk_list = list()
+    dt = datetime.now()
+
+    # Instantiates all of the scheduled breaks for the next few days specified
+    for i in range(0, days):
+        current = datetime(year=dt.year, month=dt.month, day=dt.day) + timedelta(days=i)
+
+        # Iterates over each break
+        for brk in data['breaks']:
+            # Checks if the break occurs on the current day
+            if brk['weekday'] == current.weekday():
+                start = current + timedelta(hours=brk['start_hour'], minutes=brk['start_minute'])
+                end = current + timedelta(hours=brk['end_hour'], minutes=brk['end_minute'])
+
+                try:
+                    brk_list.append(WorkBreak(start, end))
+                except TypeError:
+                    print('Error assigning work break!')
+
+    # Sorts the list so that breaks that occur sooner are at the front
+    return sorted(brk_list, key=attrgetter('start'))
 
 
 def hours_minutes_seconds(seconds):
@@ -20,6 +48,71 @@ def hours_minutes_seconds(seconds):
     seconds = seconds % SEC_PER_MIN
 
     return hours, minutes, seconds
+
+
+def intersect_breaks(first, second):
+    if first['weekday'] == second['weekday']:
+        first_start = first['start_hour'] * MIN_PER_HOUR + first['start_minute']
+        first_end = first['end_hour'] * MIN_PER_HOUR + first['end_minute']
+        second_start = second['start_hour'] * MIN_PER_HOUR + second['start_minute']
+        second_end = second['end_hour'] * MIN_PER_HOUR + second['end_minute']
+
+        # Checks if an intersections occur
+        if first_start <= second_start and first_end >= second_end:  # The second is a subset of the first
+            return True
+        elif first_start > second_start and first_end < second_end:  # The first is a subset of the second
+            return True
+        elif first_start <= second_start <= first_end:  # The second starts within the first
+            return True
+        elif first_start <= second_end <= first_end:  # The second ends within the first
+            return True
+
+    return False
+
+
+def join_breaks(first, second):
+    result = None
+
+    if intersect_breaks(first, second):
+        # Sets start hour and minute to the sooner break
+        if first['start_hour'] < second['start_hour']:
+            start_hour = first['start_hour']
+            start_minute = first['start_minute']
+        elif first['start_hour'] > second['start_hour']:
+            start_hour = second['start_hour']
+            start_minute = second['start_minute']
+        else:
+            start_hour = first['start_hour']
+
+            if first['start_minute'] < second['start_minute']:
+                start_minute = first['start_minute']
+            else:
+                start_minute = second['start_minute']
+
+        # Sets end hour and minute to the later break
+        if first['end_hour'] > second['end_hour']:
+            end_hour = first['end_hour']
+            end_minute = first['end_minute']
+        elif first['end_hour'] < second['end_hour']:
+            end_hour = second['end_hour']
+            end_minute = second['end_minute']
+        else:
+            end_hour = first['end_hour']
+
+            if first['end_minute'] > second['end_minute']:
+                end_minute = first['end_minute']
+            else:
+                end_minute = second['end_minute']
+
+        result = {
+            'weekday': first['weekday'],
+            'start_hour': start_hour,
+            'start_minute': start_minute,
+            'end_hour': end_hour,
+            'end_minute': end_minute
+        }
+
+    return result
 
 
 class MyWidget(FloatLayout):
@@ -34,28 +127,38 @@ class MyWidget(FloatLayout):
             self.keypad = Keypad(btn)
             btn.add_widget(self.keypad)
 
+    def show_no_assigned_break_text(self):
+        self.no_assigned_break_text.color = (1, 0, 0, 1)
+
+    def show_pause_text(self):
+        self.pause_text.color = (1, 0, 0, 1)
+
     def hide_keypad(self):
         if self.keypad_open:
             self.keypad_open = False
             self.keypad.parent.remove_widget(self.keypad)
             self.keypad = None
 
+    def hide_no_assigned_break_text(self):
+        self.no_assigned_break_text.color = (1, 0, 0, 0)
+
+    def hide_pause_text(self):
+        self.pause_text.color = (1, 0, 0, 0)
+
 
 class MyApp(App):
     def __init__(self):
         super(MyApp, self).__init__()
+        self.__brk_list = list()
         self.__bucket_running = False
         self.__buckets = list()
-        self.__current_bucket = ''
+        self.__clock = Clk()
         self.__clock_event = None
+        self.__current_bucket = ''
         self.__goal = 14760  # 14760 seconds is equal to 4.1 hours
         self.__gui = None
-        self.__is_break = False
         self.__max_size = 5
         self.__size = 0
-        self.__time_end = None
-        self.__time_start = None
-        self.__timer = Timer()
         self.__times = list()
 
     def append_bucket_name(self, digit):
@@ -74,13 +177,13 @@ class MyApp(App):
     def cancel_bucket(self):
         # Check if a bucket is running
         if self.__bucket_running:
-            # Updates internal values
             self.__bucket_running = False
+            self.__clock.stop_timer()
 
             # Update button states
-            self.__gui.start.disabled = False
-            self.__gui.finish.disabled = True
-            self.__gui.cancel.disabled = True
+            self.__gui.start_btn.disabled = False
+            self.__gui.finish_btn.disabled = True
+            self.__gui.cancel_btn.disabled = True
 
             self.__reset_bucket()
 
@@ -100,18 +203,16 @@ class MyApp(App):
     def finish_bucket(self):
         # Check if a bucket is running
         if self.__bucket_running:
-            # Updates internal values
             self.__bucket_running = False
+            self.__clock.stop_timer()
 
             # Update button states
-            self.__gui.start.disabled = False
-            self.__gui.finish.disabled = True
-            self.__gui.cancel.disabled = True
-
-            self.__time_end = datetime.now()
+            self.__gui.start_btn.disabled = False
+            self.__gui.finish_btn.disabled = True
+            self.__gui.cancel_btn.disabled = True
 
             # Updates table
-            self.__update_table(self.__current_bucket, self.__timer.get_time())
+            self.__update_table(self.__current_bucket, self.__clock.timer_time())
 
             # Logs the bucket statistics
             self.__log_times()
@@ -119,24 +220,25 @@ class MyApp(App):
             self.__reset_bucket()
 
     def on_start(self):
-        # TODO: Check if "Alpha Numberic Bucket Numbers.csv" is present and if not then display message.
+        # TODO: Check if name file is present and if not then display a message.
 
-        # Create data file
-        create_data_file()
+        # Populates work break list and assigns a break to the clock
+        self.__brk_list = create_break_list()
+        self.__assign_break()
+
+        # Set the bucket and time lists as lists of past data
+        self.__recent_buckets()
 
         # Goal for time with only hours
         self.__gui.bkt_goal_time.text = '{:.2f} Hrs'.format(self.__goal / SEC_PER_HOUR)
 
         # Set initial button states
-        self.__gui.start.disabled = False
-        self.__gui.finish.disabled = True
-        self.__gui.cancel.disabled = True
+        self.__gui.start_btn.disabled = False
+        self.__gui.finish_btn.disabled = True
+        self.__gui.cancel_btn.disabled = True
 
         # Schedule the clock event
-        self.__clock_event = Clock.schedule_interval(self.update, 0)
-
-        # Set the bucket and time lists as lists of past data
-        self.__recent_buckets()
+        self.__clock_event = ClkEvent.schedule_interval(self.update, 0)
 
     def on_stop(self):
         # Unschedule the clock event
@@ -145,33 +247,29 @@ class MyApp(App):
     def start_bucket(self):
         # Checks if a bucket is already running
         if not self.__bucket_running:
-            # Updates internal values
             self.__bucket_running = True
+            self.__clock.start_timer()
 
             # Update button states
-            self.__gui.start.disabled = True
-            self.__gui.finish.disabled = False
-            self.__gui.cancel.disabled = False
-
-            self.__timer.start()
-            self.__time_start = datetime.now()
+            self.__gui.start_btn.disabled = True
+            self.__gui.finish_btn.disabled = False
+            self.__gui.cancel_btn.disabled = False
 
     def update(self, dt):
+        self.__clock.update()
+
         # Handles the bucket timer
         if self.__bucket_running:
-            # Checks if a break is scheduled
-            if not self.__is_break:
-                # Time keeping with hours, minutes, and seconds
-                # (hours, minutes, seconds) = hours_minutes_seconds(self.__timer.current())
-                # self.__gui.bkt_curr_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
 
-                # Time keeping with only hours
-                self.__gui.bkt_curr_time.text = '{:.2f} Hrs'.format(self.__timer.current() / SEC_PER_HOUR)
+            # Time keeping with hours, minutes, and seconds
+            # (hours, minutes, seconds) = hours_minutes_seconds(self.__clock.timer_time())
+            # self.__gui.bkt_curr_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
 
-        # Handles the clock
-        self.__scheduled_break()  # Run function for breaks
+            # Time keeping with only hours
+            self.__gui.bkt_curr_time.text = '{:.2f} Hrs'.format(self.__clock.timer_time() / SEC_PER_HOUR)
 
-        now = datetime.now()
+        # Handles the clock ui
+        now = self.__clock.time()
 
         year = now.year
         month = now.month
@@ -197,9 +295,23 @@ class MyApp(App):
                                                                                   day,
                                                                                   year)
 
-    def __pause_break(self):
-        self.__is_break = True
-        self.__gui.pause_text.text = BREAK_TEXT
+        if self.__clock.is_break_time():
+            self.__gui.show_pause_text()
+        else:
+            self.__gui.hide_pause_text()
+
+    def __assign_break(self):
+        # Checks if the list is empty
+        if len(self.__brk_list) == 0:
+            self.__brk_list = create_break_list()
+
+        # Check if the list is still empty
+        if len(self.__brk_list) == 0:
+            self.__gui.show_no_assigned_break_text()
+        else:
+            brk = self.__brk_list.pop(0)  # Pop the front-most break
+            self.__clock.assign_break(brk, self.__assign_break)
+            self.__gui.hide_no_assigned_break_text()
 
     def __check_bucket_name(self):
         try:
@@ -224,10 +336,10 @@ class MyApp(App):
             writer = csv.writer(log, delimiter=',')
 
             writer.writerow([self.__current_bucket,
-                             '{:.2f} Hrs'.format(self.__timer.get_time() / SEC_PER_HOUR),
-                             self.__timer.get_time(),
-                             self.__time_start,
-                             self.__time_end])
+                             '{:.2f} Hrs'.format(self.__clock.timer_time() / SEC_PER_HOUR),
+                             self.__clock.timer_time(),
+                             self.__clock.timer_start_time(),
+                             self.__clock.timer_end_time()])
 
     def __recent_buckets(self):
         count = 0
@@ -262,86 +374,6 @@ class MyApp(App):
         self.__current_bucket = ''
         self.__gui.bkt_curr_name.text = 'CURRENT ()'
         self.__gui.bkt_curr_time.text = '0.00 Hrs'
-
-    def __scheduled_break(self):
-        from datetime import date
-
-        now = datetime.now()  # Gets the current month, day, hour, and minute to determine
-        month = now.month     # if a break should take place, based on work schedules or
-        day = now.day         # factory holidays.
-        hour = now.hour       #
-        minute = now.minute   #
-        today = date.today()           # Gets the day of the week as an integer
-        weekday = date.weekday(today)  # where Monday == 0 and Sunday == 6.
-
-        # Holidays
-        if month == 7 and day in range(4, 5):  # 4th of July
-            self.__pause_break()
-        if month == 1 and day == 1:  # New Years
-            self.__pause_break()
-        elif month == 12 and day in range(23, 25):  # Company Closure Christmas Eve and Christmas
-            self.__pause_break()
-        elif month == 9 and day == 2:  # Labor Day
-            self.__pause_break()
-        elif month == 11 and day in range(28, 29):  # Thanksgiving Holiday
-            self.__pause_break()
-        elif month == 12 and day in range(23, 25):  # Company Closure Christmas Eve and Christmas
-            self.__pause_break()
-        else:  # Normal workdays
-            if weekday in range(0, 4):  # Monday - Thursday
-                if hour == 8 and minute in range(15, 30):  # (8:15 am) 15 min break
-                    self.__pause_break()
-                elif hour == 11 and minute in range(0, 30):  # (11:00 am) 30 min break
-                    self.__pause_break()
-                elif hour == 12 and minute in range(30, 45):  # (12:30 am) 15 min break
-                    self.__pause_break()
-                elif hour == 14 and minute in range(45, 55):  # (2:45 pm) 10 min break
-                    self.__pause_break()
-                elif hour == 17 and minute in range(45, 60):  # (5:45 pm) 15 min break
-                    self.__pause_break()
-                elif hour == 19 and minute in range(0, 30):  # (7:00 pm) 15 min break
-                    self.__pause_break()
-                elif hour == 22 and minute in range(0, 15):  # (10:00 pm) 15 min break
-                    self.__pause_break()
-                elif hour == 0 and minute in range(30, 40):  # (12:30 am) 10 min break
-                    self.__pause_break()
-                # elif hour == 15 and minute in range(30, 45):  # End of day shift
-                #    self.__pause_break()
-                elif weekday == 0 and hour in range(0, 5) and minute in range(0, 30):  # No morning swing shift (Monday)
-                    self.__pause_break()
-                elif (hour == 2 and minute in range(0, 15)) or hour in range(3, 5) or hour == 5 and minute in range(0, 30):  # End of swing shift (Tuesday - Thursday)
-                    self.__pause_break()
-                else:  # No break
-                    # Checks if a break has just ended
-                    if self.__is_break:
-                        self.__timer.reset()
-                        self.__gui.pause_text.text = ''
-
-                    self.__is_break = False
-            elif weekday == 4:  # Friday
-                if hour == 8 and minute in range(15, 30):  # (8:15 am) 15 min break
-                    self.__pause_break()
-                elif hour == 11 and minute in range(0, 30):  # (11:00 am) 30 min break
-                    self.__pause_break()
-                elif hour == 12 and minute in range(30, 45):  # (12:30 am) 15 min break
-                    self.__pause_break()
-                elif hour == 15 and minute in range(45, 60):  # (3:45 pm) 15 min break
-                    self.__pause_break()
-                elif hour == 17 and minute in range(0, 30):  # (5:00 pm) 30 min break
-                    self.__pause_break()
-                elif hour == 20 and minute in range(0, 15):  # (8:00 pm) 15 min break
-                    self.__pause_break()
-                elif (hour == 22 and minute in range(30, 60)) or hour == 23:  # End of swing shift
-                    self.__pause_break()
-                else:  # No break
-                    # Checks if a break has just ended
-                    if self.__is_break:
-                        self.__timer.reset()
-                        self.__gui.pause_text.text = ''
-
-                    self.__is_break = False
-            else:  # Pause on weekends
-                self.__pause_break()
 
     def __update_table(self, name, time):
         # Checks if the table is not full

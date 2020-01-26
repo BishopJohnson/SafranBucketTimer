@@ -1,3 +1,4 @@
+# Custom packages
 from define import DATA_FILE
 from define import LOG_FILE
 
@@ -11,7 +12,7 @@ def create_data_file():
     if not Path(DATA_FILE).exists():
         file = open(DATA_FILE, 'w', newline='')
 
-        json.dump([{"name": None, "time": None}], file)
+        json.dump({'breaks': []}, file, sort_keys=False, indent=4)
 
 
 def create_log_file():
@@ -22,3 +23,17 @@ def create_log_file():
 
             # Create the header
             writer.writerow(['bucket_number', 'work_time_hrs', 'work_time_sec', 'start_date', 'end_date'])
+
+
+def import_data_file():
+    create_data_file()  # Creates file if it does not exist
+
+    file = open(DATA_FILE, 'r', newline='')
+
+    return json.load(file)
+
+
+def write_data_file(data):
+    file = open(DATA_FILE, 'w', newline='')
+
+    json.dump(data, file, sort_keys=False, indent=4)
