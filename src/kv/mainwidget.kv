@@ -1,35 +1,32 @@
-<MyWidget>:
+# mainwidget.kv
+#:include src/kv/partials/mainlayout.kv
+
+
+<MainWidget>:
     # The Id's for the widgets modified during runtime
-    clock: clock
-    no_assigned_break_text: no_assigned_break_text
-    pause_text: pause_text
-    bucket_1: bucket_1
-    bucket_2: bucket_2
-    bucket_3: bucket_3
-    bucket_4: bucket_4
-    bucket_5: bucket_5
-    time_1: time_1
-    time_2: time_2
-    time_3: time_3
-    time_4: time_4
-    time_5: time_5
-    time_avg: time_avg
-    start_btn: start_btn
-    finish_btn: finish_btn
-    cancel_btn: cancel_btn
-    bkt_curr_name: bkt_curr_name
-    bkt_curr_time: bkt_curr_time
-    bkt_goal_time: bkt_goal_time
+    options_btn: options_btn  # Buttons
+    start_btn: start_btn      #
+    finish_btn: finish_btn    #
+    cancel_btn: cancel_btn    #
+    clock: clock  # Clock text
+    no_assigned_break_text: no_assigned_break_text  # Break text
+    pause_text: pause_text                          #
+    bucket_1: bucket_1  # Bucket names
+    bucket_2: bucket_2  #
+    bucket_3: bucket_3  #
+    bucket_4: bucket_4  #
+    bucket_5: bucket_5  #
+    time_1: time_1      # Bucket times
+    time_2: time_2      #
+    time_3: time_3      #
+    time_4: time_4      #
+    time_5: time_5      #
+    time_avg: time_avg  #
+    bkt_curr_name: bkt_curr_name  # Current bucket name and times
+    bkt_curr_time: bkt_curr_time  #
+    bkt_goal_time: bkt_goal_time  # Goal time
 
-    # The main layout of the app
-    FloatLayout:
-        canvas.before:
-            Color:
-                rgba: 1, 1, 1, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
+    MainLayout:
         # Date and time
         Label:
             id: clock
@@ -137,25 +134,28 @@
             color: 0, 0, 0, 1
 
         # New bucket button
-        MyWidgetBtn:
+        MainWidgetBtn:
+            id: options_btn
+            pos_hint: {'x': 0.075, 'y': 0.12}
+            text: 'OPTIONS'
+
+        # New bucket button
+        MainWidgetBtn:
             id: start_btn
             pos_hint: {'x': 0.075, 'y': 0.35}
             text: 'NEW BUCKET'
-            on_release: root.show_keypad(self)
 
         # Finish bucket button
-        MyWidgetBtn:
+        MainWidgetBtn:
             id: finish_btn
             pos_hint: {'x': 0.275, 'y': 0.35}
             text: 'FINISH BUCKET'
-            on_release: app.finish_bucket()
 
         # Cancel bucket button
-        MyWidgetBtn:
+        MainWidgetBtn:
             id: cancel_btn
-            pos_hint: {'x': 0.275, 'y': 0.1}
+            pos_hint: {'x': 0.275, 'y': 0.12}
             text: 'CANCEL BUCKET'
-            on_release: app.cancel_bucket()
 
         GridLayout:
             rows: 7
@@ -188,135 +188,55 @@
                         pos: self.pos
                         size: self.size
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: bucket_5
                 text: ''
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: time_5
                 text: '0.00 Hrs'
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 id: bucket_4
                 text: ''
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 id: time_4
                 text: '0.00 Hrs'
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: bucket_3
                 text: ''
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: time_3
                 text: '0.00 Hrs'
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 id: bucket_2
                 text: ''
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 id: time_2
                 text: '0.00 Hrs'
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: bucket_1
                 text: ''
 
-            MyWidgetBktTableText1:
+            MainWidgetBktTableText1:
                 id: time_1
                 text: '0.00 Hrs'
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 text: 'AVERAGE'
 
-            MyWidgetBktTableText2:
+            MainWidgetBktTableText2:
                 id: time_avg
                 text: '0.00 Hrs'
 
 
-<Keypad>:
-    arrow_pos: 'top_mid'
-    width: 180
-    height: 180
-
-    GridLayout:
-        rows: 4
-        cols: 3
-
-        KeypadBtn:
-            text: '1'
-
-        KeypadBtn:
-            text: '2'
-
-        KeypadBtn:
-            text: '3'
-
-        KeypadBtn:
-            text: '4'
-
-        KeypadBtn:
-            text: '5'
-
-        KeypadBtn:
-            text: '6'
-
-        KeypadBtn:
-            text: '7'
-
-        KeypadBtn:
-            text: '8'
-
-        KeypadBtn:
-            text: '9'
-
-        Button:
-            text: 'cancel'
-            bold: 1
-            on_release: app.cancel_bucket_name()
-
-        KeypadBtn:
-            text: '0'
-
-        Button:
-            text: 'enter'
-            bold: 1
-            on_release: app.enter_bucket_name()
-
-
-<NameWarning>:
-    size_hint: 0.8, 0.6
-    auto_dismiss: False
-    title: 'BUCKET NAME WARNING'
-
-    FloatLayout:
-        Label:
-            pos_hint: {'x': 0.0, 'y': 0.5}
-            size_hint: 1.0, 0.5
-            text: 'The bucket name entered does not exist in the list.\nWould you like to keep the name?'
-            font_size: 24
-            halign: 'center'
-
-        Button:
-            pos_hint: {'x': 0.6, 'y': 0.2}
-            size_hint: 0.3, 0.3
-            text: 'YES'
-            bold: 1
-            font_size: 24
-            on_release: root.accept()
-
-        Button:
-            pos_hint: {'x': 0.1, 'y': 0.2}
-            size_hint: 0.3, 0.3
-            text: 'NO'
-            bold: 1
-            font_size: 24
-            on_release: root.cancel()
-
-
-<MyWidgetBtn@Button>:
+<MainWidgetBtn@Button>:
     size_hint: 0.15, 0.15
     bold: 1
     font_size: 14
@@ -324,7 +244,7 @@
     background_color: 0.357, 0.608, 0.835, 1
 
 
-<MyWidgetBktTableText1@Label>:
+<MainWidgetBktTableText1@Label>:
     bold: 1
     font_size: 18
     color: 0, 0, 0, 1
@@ -336,7 +256,7 @@
             size: self.size
 
 
-<MyWidgetBktTableText2@Label>:
+<MainWidgetBktTableText2@Label>:
     bold: 1
     font_size: 18
     color: 0, 0, 0, 1
@@ -346,8 +266,3 @@
         Rectangle:
             pos: self.pos
             size: self.size
-
-
-<KeypadBtn@Button>:
-    bold: 1
-    on_release: app.append_bucket_name(self.text)

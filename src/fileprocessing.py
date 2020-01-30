@@ -1,6 +1,6 @@
 # Custom packages
-from define import DATA_FILE
-from define import LOG_FILE
+from src.define import DATA_FILE
+from src.define import LOG_FILE
 
 import csv
 import json
