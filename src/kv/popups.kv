@@ -1,0 +1,28 @@
+<NameWarning>:
+    size_hint: 0.8, 0.6
+    auto_dismiss: False
+    title: 'BUCKET NAME WARNING'
+
+    FloatLayout:
+        Label:
+            pos_hint: {'x': 0.0, 'y': 0.5}
+            size_hint: 1.0, 0.5
+            text: 'The bucket name entered does not exist in the list.\nWould you like to keep the name?'
+            font_size: 24
+            halign: 'center'
+
+        Button:
+            pos_hint: {'x': 0.6, 'y': 0.2}
+            size_hint: 0.3, 0.3
+            text: 'YES'
+            bold: 1
+            font_size: 24
+            on_release: root.accept()
+
+        Button:
+            pos_hint: {'x': 0.1, 'y': 0.2}
+            size_hint: 0.3, 0.3
+            text: 'NO'
+            bold: 1
+            font_size: 24
+            on_release: root.cancel()

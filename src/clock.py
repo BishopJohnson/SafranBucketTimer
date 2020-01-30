@@ -1,5 +1,5 @@
 # Custom packages
-from workbreak import WorkBreak
+from src.workbreak import WorkBreak
 
 from datetime import datetime
 
@@ -18,6 +18,12 @@ class Clock:
         if isinstance(brk, WorkBreak):
             self.__brk = brk
             self.__brk_callback = callback
+
+    def has_break(self):
+        if self.__brk is not None:
+            return True
+
+        return False
 
     def is_break_time(self):
         if isinstance(self.__brk, WorkBreak) and self.__brk.start <= self.__now < self.__brk.end:

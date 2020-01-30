@@ -1,4 +1,8 @@
+from kivy.lang import Builder
 from kivy.uix.popup import Popup
+
+
+Builder.load_file('src/kv/popups.kv')
 
 
 class NameWarning(Popup):
