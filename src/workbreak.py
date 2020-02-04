@@ -15,8 +15,16 @@ class WorkBreak:
         if start > end:
             raise RuntimeWarning('Start date is greater than end date!')
 
-        self.start = start
-        self.end = end
+        self.__start = start
+        self.__end = end
+
+    @property
+    def end(self):
+        return self.__end
+
+    @property
+    def start(self):
+        return self.__start
 
     def intersects(self, brk):
         '''Returns whether the two breaks intersect or not.
@@ -30,14 +38,11 @@ class WorkBreak:
         if not isinstance(brk, WorkBreak):
             raise TypeError
 
-        # Checks if an intersections occur
-        if self.start <= brk.start and self.end >= brk.end:  # The other is a subset of this
+        if self.start <= brk.start <= self.end or self.start <= brk.end <= self.end:  # Overlaps but no subsets
             return True
-        elif self.start > brk.start and self.end < brk.end:  # This is a subset of the other
+        elif self.start <= brk.start and brk.end <= self.end:  # Other is a subset of this
             return True
-        elif self.start <= brk.start <= self.end:  # The other starts within this
-            return True
-        elif self.start <= brk.end <= self.end:  # The other ends within this
+        elif brk.start <= self.start and self.end <= brk.end:  # This is a subset of other
             return True
 
         return False
@@ -58,8 +63,8 @@ class WorkBreak:
 
         # Checks if the breaks intersect
         if self.intersects(brk):
-            start = min(self.start, brk.start)
-            end = max(self.end, brk.end)
+            start = min(self.__start, brk.start)
+            end = max(self.__end, brk.end)
             result = WorkBreak(start, end)
 
         return result
@@ -84,13 +89,13 @@ class WorkBreak:
         seconds = 0
 
         # Cases where the session does intersect with the break
-        if self.start >= start and self.end <= end:  # The break is a subset of the session
-            seconds = (self.end - self.start).total_seconds()
-        elif self.start < start and self.end > end:  # The session is a subset of the break
+        if self.__start >= start and self.__end <= end:  # The break is a subset of the session
+            seconds = (self.__end - self.__start).total_seconds()
+        elif self.__start < start and self.__end > end:  # The session is a subset of the break
             seconds = (end - start).total_seconds()
-        elif self.end > end >= self.start >= start:  # The break's end is after the session's
-            seconds = (end - self.start).total_seconds()
-        elif self.start < start <= self.end <= end:  # The break's start is before the session's
-            seconds = (self.end - start).total_seconds()
+        elif self.__end > end >= self.__start >= start:  # The break's end is after the session's
+            seconds = (end - self.__start).total_seconds()
+        elif self.__start < start <= self.__end <= end:  # The break's start is before the session's
+            seconds = (self.__end - start).total_seconds()
 
         return seconds

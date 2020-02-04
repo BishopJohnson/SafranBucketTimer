@@ -1,0 +1,40 @@
+# breakswidget.kv
+#:include src/kv/partials/mainlayout.kv
+
+
+<BreaksAddWidget>:
+    back_btn: back_btn
+    submit_btn: submit_btn
+
+    MainLayout:
+        BreaksAddWidgetLabel:
+            text: 'START DATE'
+            pos_hint: {'x': 0, 'y': 0.7}
+
+        BreaksAddWidgetLabel:
+            text: 'END DATE'
+            pos_hint: {'x': 0, 'y': 0.4}
+
+        Button:
+            id: back_btn
+            size_hint: 0.2, 0.15
+            pos_hint: {'x': 0.2, 'y': 0.15}
+            text: 'BACK'
+            bold: 1
+            font_size: 20
+
+        Button:
+            id: submit_btn
+            size_hint: 0.2, 0.15
+            pos_hint: {'x': 0.6, 'y': 0.15}
+            text: 'CONFIRM'
+            bold: 1
+            font_size: 20
+            background_normal: ''  # Removes the gray tint
+            background_color: 0.357, 0.608, 0.835, 1
+
+<BreaksAddWidgetLabel@Label>:
+    size_hint: 0.2, 0.2
+    bold: 1
+    font_size: 20
+    color: 0, 0, 0, 1
