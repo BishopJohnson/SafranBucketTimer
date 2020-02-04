@@ -1,5 +1,5 @@
 # Custom packages
-from src.define import MAIN_VIEW
+from src.define import Views
 from src.widgets.appwidget import AppWidget
 
 from functools import partial
@@ -16,4 +16,5 @@ class OptionsWidget(FloatLayout, AppWidget):
 
         self.__app = app
 
-        self.back_btn.bind(on_release=partial(self.__app.open_view, MAIN_VIEW))
+        self.back_btn.bind(on_release=partial(self.__app.gui.open_view, Views.MAIN))
+        self.breaks_btn.bind(on_release=partial(self.__app.gui.open_view, Views.BREAKS_MENU))

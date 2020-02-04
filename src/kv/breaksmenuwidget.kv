@@ -3,9 +3,10 @@
 #:include src/kv/partials/optionswidgetbtn.kv
 
 
-<BreaksWidget>:
+<BreaksMenuWidget>:
     back_btn: back_btn
     view_breaks_btn: view_breaks_btn
+    assign_breaks_btn: assign_breaks_btn
 
     MainLayout:
         Button:
@@ -20,3 +21,8 @@
             id: view_breaks_btn
             pos_hint: {'x': 0.2, 'y': 0.75}
             text: 'VIEW BREAKS'
+
+        OptionsWidgetBtn:
+            id: assign_breaks_btn
+            pos_hint: {'x': 0.2, 'y': 0.55}
+            text: 'ASSIGN BREAKS'

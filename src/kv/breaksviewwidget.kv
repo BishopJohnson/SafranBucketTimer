@@ -1,0 +1,60 @@
+# breakswidget.kv
+#:include src/kv/partials/mainlayout.kv
+
+
+<BreaksViewWidget>:
+    back_btn: back_btn
+    #day_elem: day_elem
+    table: table
+
+    MainLayout:
+        Button:
+            id: back_btn
+            size_hint: 0.6, 0.15
+            pos_hint: {'x': 0.2, 'y': 0.15}
+            text: 'BACK'
+            bold: 1
+            font_size: 20
+
+        ScrollView:
+            pos_hint: {'x': 0.1, 'y': 0.35}
+            size_hint: 0.8, 0.5
+            do_scroll_x: True
+            do_scroll_y: True
+            bar_width: 10
+
+            GridLayout:
+                id: table
+                size_hint_y: None
+                cols: 1
+                row_default_height: '40dp'
+                row_force_default: True
+                spacing: 0, 0
+                padding: 0, 0
+
+
+<TableLayout1@BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: 0.815, 0.871, 0.937, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<TableLayout2@BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: 0.914, 0.937, 0.968, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<TableText@Label>:
+    bold: 1
+    font_size: 20
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+    color: 0, 0, 0, 1

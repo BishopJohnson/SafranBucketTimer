@@ -1,5 +1,9 @@
 # Custom packages
+from src.define import Views
 from src.widgets.appwidget import AppWidget
+from src.widgets.breaksaddwidget import BreaksAddWidget
+from src.widgets.breaksmenuwidget import BreaksMenuWidget
+from src.widgets.breaksviewwidget import BreaksViewWidget
 from src.widgets.mainwidget import MainWidget
 from src.widgets.optionswidget import OptionsWidget
 
@@ -13,21 +17,22 @@ class RootWidget(FloatLayout, AppWidget):
         self.__app = app
         self.__widget = None
 
-    def show_main(self):
-        self.clear_widgets()
+    def open_view(self, view, *args, **kwargs):
+        if not isinstance(view, Views):
+            raise TypeError
 
-        self.__widget = MainWidget(self.__app)
-        self.__widget.notify()
-
-        self.add_widget(self.__widget)
-
-    def show_options(self):
-        self.clear_widgets()
-
-        self.__widget = OptionsWidget(self.__app)
-        self.__widget.notify()
-
-        self.add_widget(self.__widget)
+        if view == Views.MAIN:
+            self.__set_widget(MainWidget(self.__app))
+        elif view == Views.OPTIONS_MENU:
+            self.__set_widget(OptionsWidget(self.__app))
+        elif view == Views.BREAKS_MENU:
+            self.__set_widget(BreaksMenuWidget(self.__app))
+        elif view == Views.BREAKS_VIEW:
+            self.__set_widget(BreaksViewWidget(self.__app))
+        elif view == Views.BREAKS_ADD:
+            self.__set_widget(BreaksAddWidget(self.__app))
+        else:
+            print('No such view {}'.format(view))
 
     def notify(self):
         super(RootWidget, self).notify()
@@ -40,3 +45,13 @@ class RootWidget(FloatLayout, AppWidget):
 
         if self.__widget is not None:
             self.__widget.update()
+
+    def __set_widget(self, widget):
+        if isinstance(widget, AppWidget):
+            self.clear_widgets()
+
+            self.__widget = widget
+            self.notify()
+            self.update()
+
+            self.add_widget(self.__widget)

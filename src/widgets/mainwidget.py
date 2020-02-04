@@ -1,6 +1,6 @@
 # Custom packages
 from src.define import hours_minutes_seconds
-from src.define import OPTIONS_VIEW
+from src.define import Views
 from src.define import SEC_PER_HOUR
 from src.widgets.appwidget import AppWidget
 from src.widgets.keypad import Keypad
@@ -23,7 +23,7 @@ class MainWidget(FloatLayout, AppWidget):
 
         self.cancel_btn.bind(on_release=self.__app.cancel_bucket)
         self.finish_btn.bind(on_release=self.__app.finish_bucket)
-        self.options_btn.bind(on_release=partial(self.__app.open_view, OPTIONS_VIEW))
+        self.options_btn.bind(on_release=partial(self.__app.gui.open_view, Views.OPTIONS_MENU))
         self.start_btn.bind(on_release=partial(self.show_keypad, self.start_btn))
 
     def hide_keypad(self, *args, **kwargs):
@@ -76,14 +76,15 @@ class MainWidget(FloatLayout, AppWidget):
 
         if self.__app.is_bucket_running:
             # Time keeping with hours, minutes, and seconds
-            (hours, minutes, seconds) = hours_minutes_seconds(self.__app.clock.timer_time())
-            self.bkt_curr_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
+            # (hours, minutes, seconds) = hours_minutes_seconds(self.__app.clock.timer)
+            # self.bkt_curr_time.text = f'{hours}:{minutes}:{seconds}'
 
             # Time keeping with only hours
-            # self.bkt_curr_time.text = '{:.2f} Hrs'.format(self.__app.clock.timer_time() / SEC_PER_HOUR)
+            time = self.__app.clock.timer / SEC_PER_HOUR
+            self.bkt_curr_time.text = f'{time:.2f} Hrs'
 
         # Handles the clock ui
-        now = self.__app.clock.time()
+        now = self.__app.clock.time
 
         year = now.year
         month = now.month
@@ -102,12 +103,7 @@ class MainWidget(FloatLayout, AppWidget):
             if hour > 12:
                 hour = hour % 12
 
-        self.clock.text = '{:02d}:{:02d} {:s}    {:02d}/{:02d}/{:d}'.format(hour,
-                                                                            minute,
-                                                                            period,
-                                                                            month,
-                                                                            day,
-                                                                            year)
+        self.clock.text = f'{hour:02d}:{minute:02d} {period:s}    {month:02d}/{day:02d}/{year:d}'
 
         if self.__app.clock.has_break():
             self.hide_no_assigned_break_text()

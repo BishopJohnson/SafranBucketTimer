@@ -12,7 +12,12 @@ def create_data_file():
     if not Path(DATA_FILE).exists():
         file = open(DATA_FILE, 'w', newline='')
 
-        json.dump({'breaks': []}, file, sort_keys=False, indent=4)
+        data = {
+            'bucket': None,
+            'breaks': []
+        }
+
+        json.dump(data, file, sort_keys=False, indent=4)
 
 
 def create_log_file():
