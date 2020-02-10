@@ -26,6 +26,9 @@ class MainWidget(FloatLayout, AppWidget):
         self.options_btn.bind(on_release=partial(self.__app.gui.open_view, Views.OPTIONS_MENU))
         self.start_btn.bind(on_release=partial(self.show_keypad, self.start_btn))
 
+    def hide_closure_text(self):
+        self.closure_text.color = (1, 0, 0, 0)
+
     def hide_keypad(self, *args, **kwargs):
         if self.__keypad_open:
             self.__keypad_open = False
@@ -54,6 +57,9 @@ class MainWidget(FloatLayout, AppWidget):
         self.__update_table()
 
         pass
+
+    def show_closure_text(self):
+        self.closure_text.color = (1, 0, 0, 1)
 
     def show_keypad(self, btn, *args, **kwargs):
         if not self.__keypad_open:
@@ -105,16 +111,24 @@ class MainWidget(FloatLayout, AppWidget):
 
         self.clock.text = f'{hour:02d}:{minute:02d} {period:s}    {month:02d}/{day:02d}/{year:d}'
 
-        if self.__app.clock.has_break():
+        # Handles closure and break texts
+        if self.__app.clock.is_closure():
+            self.show_closure_text()
             self.hide_no_assigned_break_text()
+            self.hide_pause_text()
+        else:
+            self.hide_closure_text()
 
-            if self.__app.clock.is_break_time():
-                self.show_pause_text()
+            if self.__app.clock.has_break():
+                self.hide_no_assigned_break_text()
+
+                if self.__app.clock.is_break_time():
+                    self.show_pause_text()
+                else:
+                    self.hide_pause_text()
             else:
                 self.hide_pause_text()
-        else:
-            self.hide_pause_text()
-            self.show_no_assigned_break_text()
+                self.show_no_assigned_break_text()
 
     def _keypad_cancel_callback(self, *args, **kwargs):
         self.__app.cancel_bucket_name()

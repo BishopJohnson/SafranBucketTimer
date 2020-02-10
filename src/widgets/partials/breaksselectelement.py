@@ -23,16 +23,20 @@ class BreaksSelectElement(RelativeLayout, AppWidget):
         self.__period = 'AM'
         self.__weekday_elem = SelectElement(self._app,
                                             increment_callback=partial(self.__increment_day, 1),
-                                            decrement_callback=partial(self.__increment_day, -1))
+                                            decrement_callback=partial(self.__increment_day, -1),
+                                            size_hint_x=0.2)
         self.__hour_elem = SelectElement(self._app,
                                          increment_callback=partial(self.__increment_hour, 1),
-                                         decrement_callback=partial(self.__increment_hour, -1))
+                                         decrement_callback=partial(self.__increment_hour, -1),
+                                         size_hint_x=0.2)
         self.__minute_elem = SelectElement(self._app,
                                            increment_callback=partial(self.__increment_minute, 1),
-                                           decrement_callback=partial(self.__increment_minute, -1))
+                                           decrement_callback=partial(self.__increment_minute, -1),
+                                           size_hint_x=0.2)
         self.__period_elem = SelectElement(self._app,
                                            increment_callback=self.__toggle_period,
-                                           decrement_callback=self.__toggle_period)
+                                           decrement_callback=self.__toggle_period,
+                                           size_hint_x=0.2)
 
         self.layout.add_widget(self.__weekday_elem)
         self.layout.add_widget(self.__hour_elem)

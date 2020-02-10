@@ -9,8 +9,9 @@
     finish_btn: finish_btn    #
     cancel_btn: cancel_btn    #
     clock: clock  # Clock text
-    no_assigned_break_text: no_assigned_break_text  # Break text
+    no_assigned_break_text: no_assigned_break_text  # Break and closure texts
     pause_text: pause_text                          #
+    closure_text: closure_text                      #
     bucket_1: bucket_1  # Bucket names
     bucket_2: bucket_2  #
     bucket_3: bucket_3  #
@@ -55,6 +56,16 @@
             text: 'TRACKER PAUSED FOR BREAK'
             bold: 1
             font_size: 24
+            color: 1, 0, 0, 1
+
+        # Closure time text
+        Label:
+            id: closure_text
+            pos_hint: {'x': 0.15, 'y': 0.45}
+            size_hint: 0.2, 0.2
+            text: 'TRACKER PAUSED FOR CLOSURE/HOLIDAY'
+            bold: 1
+            font_size: 18
             color: 1, 0, 0, 1
 
         # The grid layout for the bucket time table
