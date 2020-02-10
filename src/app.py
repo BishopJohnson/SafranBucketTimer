@@ -8,7 +8,7 @@ from src.workbreak import WorkBreak
 
 import csv
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from kivy.app import App
 from kivy.clock import Clock as ClkEvent
 from operator import attrgetter
@@ -63,6 +63,23 @@ def create_break_list(data, *args, days_before=14, days_after=14, remove_past_br
             brk_list.pop(0)
 
     return brk_list
+
+
+def create_closure_list(data, *args, days_before=365, **kwargs):
+    closure_list = list()
+
+    for closure in data['closures']:
+        closure_list.append(date(closure['year'], closure['month'], closure['day']))
+
+    closure_list.sort()
+
+    now = date.today()
+
+    # Removes closures before the days before threshold
+    while len(closure_list) > 0 and (now - closure_list[0]).days > days_before:
+        closure_list.pop(0)
+
+    return closure_list
 
 
 def intersect_breaks(first, second):
@@ -147,6 +164,7 @@ class MyApp(App):
         self.__buckets = list()
         self.__clock = Clk()
         self.__clock_event = None
+        self.__closure_list = list()
         self.__current_bucket_name = ''
         self.__data_cache = None
         self.__goal = 14760  # 14760 seconds is equal to 4.1 hours
@@ -210,7 +228,41 @@ class MyApp(App):
 
                 return self.add_break(joined_brk)  # Recursive call to add the joined break
 
-        self.__add_break(brk)
+        if self.__is_bucket_running:
+            self.__update_bucket_saved_data()
+
+        self.__data_cache['breaks'].append(brk)
+        write_data_file(self.__data_cache)
+
+        # Recreates the break list with the new break
+        self.__brk_list = create_break_list(self.__data_cache)
+        self.__assign_break()
+
+        self.__gui.notify()
+
+        return True
+
+    def add_closure(self, closure, *args, **kwargs):
+        for key in CLOSURE_KEYS:
+            if key not in closure:
+                return False
+
+        # Checks if the closure already exists in the data array
+        for current_closure in self.__data_cache['closures']:
+            if current_closure == closure:
+                return False
+
+        if self.__is_bucket_running:
+            self.__update_bucket_saved_data()
+
+        self.__data_cache['closures'].append(closure)
+        write_data_file(self.__data_cache)
+
+        # Recreates the closure list with the new closure
+        self.__closure_list = create_closure_list(self.__data_cache)
+        self.__assign_closure()
+
+        self.__gui.notify()
 
         return True
 
@@ -282,7 +334,9 @@ class MyApp(App):
         # Populates work break list and assigns a break to the clock
         self.__data_cache = import_data_file()
         self.__brk_list = create_break_list(self.__data_cache)
+        self.__closure_list = create_closure_list(self.__data_cache)
         self.__assign_break()
+        self.__assign_closure()
 
         # Set the bucket and time lists as lists of past data
         self.__recent_buckets()
@@ -308,22 +362,42 @@ class MyApp(App):
             if key not in brk:
                 return False
 
-        try:
+        if brk in self.__data_cache['breaks']:
             self.__data_cache['breaks'].remove(brk)
             write_data_file(self.__data_cache)
 
             if self.__is_bucket_running:
                 self.__update_bucket_saved_data()
 
-            # Recreates the break list with the new break
+            # Recreates the break list without the removed break
             self.__brk_list = create_break_list(self.__data_cache)
             self.__assign_break()
 
             self.__gui.notify()
 
             return True
-        except ValueError:
-            print('No such break exists in break list!')
+
+        return False
+
+    def remove_closure(self, closure, *args, **kwargs):
+        for key in CLOSURE_KEYS:
+            if key not in closure:
+                return False
+
+        if closure in self.__data_cache['closures']:
+            self.__data_cache['closures'].remove(closure)
+            write_data_file(self.__data_cache)
+
+            if self.__is_bucket_running:
+                self.__update_bucket_saved_data()
+
+            # Recreates the closure list without the removed closure
+            self.__closure_list = create_closure_list(self.__data_cache)
+            self.__assign_closure()
+
+            self.__gui.notify()
+
+            return True
 
         return False
 
@@ -339,19 +413,6 @@ class MyApp(App):
         self.__clock.update()
         self.__gui.update()
 
-    def __add_break(self, brk):
-        if self.__is_bucket_running:
-            self.__update_bucket_saved_data()
-
-        self.__data_cache['breaks'].append(brk)
-        write_data_file(self.__data_cache)
-
-        # Recreates the break list with the new break
-        self.__brk_list = create_break_list(self.__data_cache)
-        self.__assign_break()
-
-        self.__gui.notify()
-
     def __assign_break(self):
         # Checks if the list is empty
         if len(self.__brk_list) == 0:
@@ -363,6 +424,18 @@ class MyApp(App):
             self.__clock.assign_break(brk, self.__assign_break)
         else:
             self.__clock.assign_break(None)
+
+    def __assign_closure(self):
+        # Checks if the list is empty
+        if len(self.__closure_list) == 0:
+            self.__closure_list = create_closure_list(self.__data_cache)
+
+        # Check if the list is still empty
+        if len(self.__closure_list) > 0:
+            closure = self.__closure_list.pop(0)  # Pop the front-most closure
+            self.__clock.assign_closure(closure, self.__assign_closure)
+        else:
+            self.__clock.assign_closure(None)
 
     def __check_bucket_name(self):
         try:
@@ -474,11 +547,30 @@ class MyApp(App):
             dt = (now - cont_date).days + 7
             brk_list = create_break_list(self.__data_cache, days_before=dt, days_after=1, remove_past_breaks=False)
 
+            # Creates closures as work breaks and joins them to the breaks list
+            closure_list = create_closure_list(self.__data_cache, days_before=dt)
+            for closure in closure_list:
+                start = datetime(year=closure.year, month=closure.month, day=closure.day)
+                end = start + timedelta(days=1)
+                closure = WorkBreak(start, end)
+
+                i = 0
+                while i < len(brk_list):
+                    joined_brk = closure.join(brk_list[i])
+
+                    if joined_brk is not None:
+                        closure = joined_brk
+                        brk_list.pop(i)
+                    else:
+                        i += 1
+
+                brk_list.append(closure)
+
             seconds = (now - cont_date).seconds  # The seconds between now and the continuous date
 
             # Removes seconds of breaks that occurred between now and the continuous date
             for brk in brk_list:
-                seconds -= brk.seconds(cont_date, now)
+                seconds = max(0, seconds - brk.seconds(cont_date, now))
 
             self.__is_bucket_running = True
             self.__current_bucket_name = bucket['name']

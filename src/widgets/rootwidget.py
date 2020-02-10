@@ -2,6 +2,7 @@
 from src.define import Views
 from src.widgets.appwidget import AppWidget
 from src.widgets.breaksaddwidget import BreaksAddWidget
+from src.widgets.breaksclosurewidget import BreaksClosuresWidget
 from src.widgets.breaksmenuwidget import BreaksMenuWidget
 from src.widgets.breaksviewwidget import BreaksViewWidget
 from src.widgets.mainwidget import MainWidget
@@ -31,6 +32,8 @@ class RootWidget(FloatLayout, AppWidget):
             self.__set_widget(BreaksViewWidget(self.__app))
         elif view == Views.BREAKS_ADD:
             self.__set_widget(BreaksAddWidget(self.__app))
+        elif view == Views.BREAKS_CLOSURES:
+            self.__set_widget(BreaksClosuresWidget(self.__app))
         else:
             print('No such view {}'.format(view))
 

@@ -1,7 +1,7 @@
 # Custom packages
 from src.workbreak import WorkBreak
 
-from datetime import datetime
+from datetime import date, datetime
 from math import floor
 
 
@@ -9,6 +9,8 @@ class Clock:
     def __init__(self):
         self.__brk = None
         self.__brk_callback = None
+        self.__closure = None
+        self.__closure_callback = None
         self.__time = datetime.now()
         self.__timer = 0
         self.__timer_end_time = None
@@ -31,6 +33,14 @@ class Clock:
             self.__brk = brk
             self.__brk_callback = callback
 
+    def assign_closure(self, closure, callback=None):
+        if closure is None:
+            self.__closure = None
+            self.__closure_callback = None
+        elif isinstance(closure, date):
+            self.__closure = closure
+            self.__closure_callback = callback
+
     def has_break(self):
         if self.__brk is not None:
             return True
@@ -39,6 +49,12 @@ class Clock:
 
     def is_break_time(self):
         if isinstance(self.__brk, WorkBreak) and self.__brk.start <= self.__time < self.__brk.end:
+            return True
+
+        return False
+
+    def is_closure(self):
+        if isinstance(self.__closure, date) and self.__closure == self.__time.date():
             return True
 
         return False
@@ -63,7 +79,7 @@ class Clock:
         now = datetime.now()
 
         # Checks if the timer ought to be updated
-        if self.__timer_running and not self.is_break_time():
+        if self.__timer_running and not (self.is_closure() or self.is_break_time()):
             self.__timer += (now - self.__time).microseconds / pow(10, 6)  # Converts from microseconds to seconds
 
         self.__time = now  # Update the current time
@@ -75,3 +91,11 @@ class Clock:
             # Run callback function
             if self.__brk_callback is not None:
                 self.__brk_callback()
+
+        # Checks if the closure has ended
+        if isinstance(self.__closure, date) and self.__time.date() > self.__closure:
+            self.__closure = None
+
+            # Run callback function
+            if self.__closure_callback is not None:
+                self.__closure_callback()

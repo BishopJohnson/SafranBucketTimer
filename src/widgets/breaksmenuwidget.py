@@ -18,4 +18,5 @@ class BreaksMenuWidget(FloatLayout, AppWidget):
 
         self.back_btn.bind(on_release=partial(self.__app.gui.open_view, Views.OPTIONS_MENU))
         self.assign_breaks_btn.bind(on_release=partial(self.__app.gui.open_view, Views.BREAKS_ADD))
+        self.closures_btn.bind(on_release=partial(self.__app.gui.open_view, Views.BREAKS_CLOSURES))
         self.view_breaks_btn.bind(on_release=partial(self.__app.gui.open_view, Views.BREAKS_VIEW))

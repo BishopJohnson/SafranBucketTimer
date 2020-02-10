@@ -2,6 +2,11 @@ from enum import Enum
 from math import floor
 
 
+DATA_File_KEYS = [
+    'bucket',
+    'breaks',
+    'closures'
+]
 BREAK_KEYS = [
     'start_weekday',
     'start_hour',
@@ -9,6 +14,11 @@ BREAK_KEYS = [
     'end_weekday',
     'end_hour',
     'end_minute'
+]
+CLOSURE_KEYS = [
+    'year',
+    'month',
+    'day'
 ]
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 SEC_PER_HOUR = 3600
@@ -45,3 +55,4 @@ class Views(Enum):
     BREAKS_MENU = 3
     BREAKS_VIEW = 4
     BREAKS_ADD = 5
+    BREAKS_CLOSURES = 6

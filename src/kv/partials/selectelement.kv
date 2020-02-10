@@ -2,31 +2,10 @@
 
 
 <SelectElement@RelativeLayout>:
-    decrement_btn: decrement_btn
-    element_btn: element_btn
-    increment_btn: increment_btn
-
-    size_hint_x: 0.2
+    layout: layout
 
     BoxLayout:
-        orientation: 'vertical'
-
-        SelectElementBtn:
-            id: increment_btn
-            text: '+'
-            color: 1, 1, 1, 1
-
-        SelectElementBtn:
-            id: element_btn
-            text: ''
-            color: 0, 0, 0, 1
-            background_normal: ''  # Removes the gray tint
-            background_color: 1, 1, 1, 1
-
-        SelectElementBtn:
-            id: decrement_btn
-            text: '-'
-            color: 1, 1, 1, 1
+        id: layout
 
 
 <SelectElementBtn@Button>
