@@ -1,0 +1,36 @@
+# tablelayout.kv
+
+
+<TableLayout1@BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: 0.815, 0.871, 0.937, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<TableLayout2@BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: 0.914, 0.937, 0.968, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<TableText@Label>:
+    bold: 1
+    font_size: 20
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+    color: 0, 0, 0, 1
+
+
+<TableTextInput@TextInput>:
+    font_size: 20
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+    color: 0, 0, 0, 1

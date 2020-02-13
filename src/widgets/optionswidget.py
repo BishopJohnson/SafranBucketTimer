@@ -18,3 +18,4 @@ class OptionsWidget(FloatLayout, AppWidget):
 
         self.back_btn.bind(on_release=partial(self.__app.gui.open_view, Views.MAIN))
         self.breaks_btn.bind(on_release=partial(self.__app.gui.open_view, Views.BREAKS_MENU))
+        self.ui_btn.bind(on_release=partial(self.__app.gui.open_view, Views.UI_SETTINGS))

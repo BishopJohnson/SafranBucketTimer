@@ -1,12 +1,27 @@
 # Custom packages
+from src.define import CONFIG_FILE
+from src.define import CONFIG_FILE_KEYS
 from src.define import DATA_FILE
-from src.define import DATA_File_KEYS
+from src.define import DATA_FILE_KEYS
 from src.define import LOG_FILE
 
 import csv
 import json
 from datetime import date
 from pathlib import Path
+
+
+def create_config_file():
+    # Checks if the file does not exist
+    if not Path(CONFIG_FILE).exists():
+        file = open(CONFIG_FILE, 'w', newline='')
+
+        config = {
+            'team_name': '',
+            'goal_time': '0.00'
+        }
+
+        json.dump(config, file, sort_keys=False, indent=4)
 
 
 def create_data_file():
@@ -33,6 +48,16 @@ def create_log_file():
             writer.writerow(['bucket_number', 'work_time_hrs', 'work_time_sec', 'start_date', 'end_date'])
 
 
+def import_config_file():
+    create_config_file()  # Creates file if it does not exist
+
+    file = open(CONFIG_FILE, 'r', newline='')
+
+    config = _format_config(json.load(file))
+
+    return config
+
+
 def import_data_file():
     create_data_file()  # Creates file if it does not exist
 
@@ -41,6 +66,14 @@ def import_data_file():
     data = _format_data(json.load(file))
 
     return data
+
+
+def write_config_file(config):
+    config = _format_config(config)
+
+    file = open(CONFIG_FILE, 'w', newline='')
+
+    json.dump(config, file, sort_keys=False, indent=4)
 
 
 def write_data_file(data):
@@ -59,8 +92,20 @@ def write_data_file(data):
     json.dump(data, file, sort_keys=False, indent=4)
 
 
+def _format_config(config):
+    for key in CONFIG_FILE_KEYS:
+        # TODO: Assign the values in a smarter fashion that doesn't rely on knowing the types in this function.
+        if key not in config:
+            if key == 'team_name':
+                config.update(team_name='')
+            elif key == 'goal_time':
+                config.update(goal_time='0.00')
+
+    return config
+
+
 def _format_data(data):
-    for key in DATA_File_KEYS:
+    for key in DATA_FILE_KEYS:
         # TODO: Assign the values in a smarter fashion that doesn't rely on knowing the types in this function.
         if key not in data:
             if key == 'bucket':

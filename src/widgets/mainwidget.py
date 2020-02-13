@@ -51,7 +51,22 @@ class MainWidget(FloatLayout, AppWidget):
         else:
             self.bkt_curr_name.text = 'CURRENT ({})'.format(self.__app.current_bucket_name)
 
-        self.bkt_goal_time.text = '{:.2f} Hrs'.format(self.__app.goal / SEC_PER_HOUR)
+        # Updates UI elements reliant on config data
+        config = self.__app.config_cache
+        goal_time = config['goal_time']
+        team_name = config['team_name']
+
+        # Tries to format the goal time if it's a float
+        try:
+            self.bkt_goal_time.text = f'{float(goal_time):.02f} Hrs'
+        except ValueError:
+            self.bkt_goal_time.text = f'{goal_time} Hrs'
+
+        # Appends 's if team name was set
+        if len(team_name) > 0:
+            team_name = f'{team_name}\'s '
+
+        self.team_label.text = f'{team_name.upper()}BUCKET TIME TRACKER'
 
         self.__update_buttons()
         self.__update_table()

@@ -7,6 +7,7 @@ from src.widgets.breaksmenuwidget import BreaksMenuWidget
 from src.widgets.breaksviewwidget import BreaksViewWidget
 from src.widgets.mainwidget import MainWidget
 from src.widgets.optionswidget import OptionsWidget
+from src.widgets.uisettingswidget import UISettingsWidget
 
 from kivy.uix.floatlayout import FloatLayout
 
@@ -34,6 +35,8 @@ class RootWidget(FloatLayout, AppWidget):
             self.__set_widget(BreaksAddWidget(self.__app))
         elif view == Views.BREAKS_CLOSURES:
             self.__set_widget(BreaksClosuresWidget(self.__app))
+        elif view == Views.UI_SETTINGS:
+            self.__set_widget(UISettingsWidget(self.__app))
         else:
             print('No such view {}'.format(view))
 

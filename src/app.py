@@ -166,8 +166,8 @@ class MyApp(App):
         self.__clock_event = None
         self.__closure_list = list()
         self.__current_bucket_name = ''
+        self.__config_cache = None
         self.__data_cache = None
-        self.__goal = 14760  # 14760 seconds is equal to 4.1 hours
         self.__gui = None
         self.__is_bucket_running = False
         self.__max_size = 5
@@ -183,16 +183,16 @@ class MyApp(App):
         return self.__clock
 
     @property
+    def config_cache(self):
+        return self.__config_cache.copy()
+
+    @property
     def current_bucket_name(self):
         return self.__current_bucket_name
 
     @property
     def data_cache(self):
-        return self.__data_cache
-
-    @property
-    def goal(self):
-        return self.__goal
+        return self.__data_cache.copy()
 
     @property
     def is_bucket_running(self):
@@ -276,6 +276,9 @@ class MyApp(App):
     def build(self):
         super(MyApp, self).build()
 
+        self.__config_cache = import_config_file()
+        self.__data_cache = import_data_file()
+
         self.__gui = RootWidget(self)
         self.__gui.open_view(Views.MAIN)
 
@@ -332,7 +335,6 @@ class MyApp(App):
         # TODO: Check if name file is present and if not then display a message.
 
         # Populates work break list and assigns a break to the clock
-        self.__data_cache = import_data_file()
         self.__brk_list = create_break_list(self.__data_cache)
         self.__closure_list = create_closure_list(self.__data_cache)
         self.__assign_break()
@@ -412,6 +414,16 @@ class MyApp(App):
     def update(self, dt):
         self.__clock.update()
         self.__gui.update()
+
+    def update_config(self, config, *args, **kwargs):
+        for key in config:
+            # Only pulls keys that are valid file keys
+            if key in CONFIG_FILE_KEYS:
+                self.__config_cache[key] = config[key]
+
+        write_config_file(self.__config_cache)
+
+        self.__gui.notify()
 
     def __assign_break(self):
         # Checks if the list is empty

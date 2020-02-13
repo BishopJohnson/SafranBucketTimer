@@ -1,20 +1,30 @@
-# breakswidget.kv
+# uisettingswidget.kv
 #:include src/kv/partials/mainlayout.kv
 
 
-<BreaksViewWidget>:
+<UISettingsWidget>:
     back_btn: back_btn
-    #day_elem: day_elem
+    apply_btn: apply_btn
     table: table
 
     MainLayout:
         Button:
             id: back_btn
-            size_hint: 0.6, 0.15
-            pos_hint: {'x': 0.2, 'y': 0.15}
+            size_hint: 0.2, 0.15
+            pos_hint: {'x': 0.2, 'y': 0.05}
             text: 'BACK'
             bold: 1
             font_size: 20
+
+        Button:
+            id: apply_btn
+            size_hint: 0.2, 0.15
+            pos_hint: {'x': 0.6, 'y': 0.05}
+            text: 'APPLY'
+            bold: 1
+            font_size: 20
+            background_normal: ''  # Removes the gray tint
+            background_color: 0.357, 0.608, 0.835, 1
 
         ScrollView:
             pos_hint: {'x': 0.1, 'y': 0.35}
