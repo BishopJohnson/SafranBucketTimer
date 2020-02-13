@@ -26,6 +26,7 @@
     bkt_curr_name: bkt_curr_name  # Current bucket name and times
     bkt_curr_time: bkt_curr_time  #
     bkt_goal_time: bkt_goal_time  # Goal time
+    team_label: team_label        # Team label
 
     MainLayout:
         # Date and time
@@ -137,9 +138,9 @@
             size_hint: 0.3, 0.3
 
         Label:
+            id: team_label
             pos_hint: {'x': 0.65, 'y': 0.775}
             size_hint: 0.2, 0.2
-            text: 'BACKSHOP\'S BUCKET TIME TRACKER'
             bold: 1
             font_size: 18
             color: 0, 0, 0, 1

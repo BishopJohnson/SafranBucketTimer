@@ -2,13 +2,12 @@
 from src.define import Days
 from src.define import Views
 from src.widgets.appwidget import AppWidget
+from src.widgets.partials.tablelayout import *
 
 from functools import partial
 from kivy.lang import Builder
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.label import Label
 from operator import itemgetter
 
 
@@ -96,18 +95,3 @@ class BreaksViewWidget(FloatLayout, AppWidget):
                 layout.add_widget(TableText(text='  {} - {}'.format(start, end)))
 
             self.table.add_widget(layout)
-
-
-class TableLayout1(BoxLayout):
-    def __init__(self):
-        super(TableLayout1, self).__init__()
-
-
-class TableLayout2(BoxLayout):
-    def __init__(self):
-        super(TableLayout2, self).__init__()
-
-
-class TableText(Label):
-    def __init__(self, text=''):
-        super(TableText, self).__init__(text=text)
