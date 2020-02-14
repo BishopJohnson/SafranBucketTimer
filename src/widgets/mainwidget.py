@@ -164,18 +164,22 @@ class MainWidget(FloatLayout, AppWidget):
             self.cancel_btn.disabled = True
 
     def __update_table(self):
-        buckets = self.__app.buckets
-        times = self.__app.times
+        n = 5  # TODO: Make N a config setting and allow labels_bkt and labels_time to scale to it.
         labels_bkt = [self.bucket_1, self.bucket_2, self.bucket_3, self.bucket_4, self.bucket_5]
         labels_time = [self.time_1, self.time_2, self.time_3, self.time_4, self.time_5]
+
+        log = self.__app.log_cache[-n:]  # The last N buckets
+        log.reverse()
 
         count = 0
         time_sum = 0
 
-        for i in range(0, self.__app.max_size):
-            if i < self.__app.size:
-                name = buckets[i]
-                time = times[i]
+        for i in range(0, n):
+            if i < len(log):
+                bkt = log[i]
+                name = str(bkt[0])
+                time = int(bkt[2])
+
                 count += 1
                 time_sum += time
             else:
@@ -183,7 +187,7 @@ class MainWidget(FloatLayout, AppWidget):
                 time = 0
 
             # Updates table UI
-            labels_bkt[4 - i].text = str(name)
+            labels_bkt[4 - i].text = name
             labels_time[4 - i].text = '{:.2f} Hrs'.format(time / SEC_PER_HOUR)
 
         if count > 0:

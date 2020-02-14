@@ -4,6 +4,7 @@ from src.define import CONFIG_FILE_KEYS
 from src.define import DATA_FILE
 from src.define import DATA_FILE_KEYS
 from src.define import LOG_FILE
+from src.define import LOG_FILE_HEADER
 
 import csv
 import json
@@ -14,46 +15,51 @@ from pathlib import Path
 def create_config_file():
     # Checks if the file does not exist
     if not Path(CONFIG_FILE).exists():
-        file = open(CONFIG_FILE, 'w', newline='')
+        with open(CONFIG_FILE, 'w', newline='') as file:
+            config = {
+                'team_name': '',
+                'goal_time': '0.00'
+            }
 
-        config = {
-            'team_name': '',
-            'goal_time': '0.00'
-        }
+            json.dump(config, file, sort_keys=False, indent=4)
 
-        json.dump(config, file, sort_keys=False, indent=4)
+            file.close()
 
 
 def create_data_file():
     # Checks if the file does not exist
     if not Path(DATA_FILE).exists():
-        file = open(DATA_FILE, 'w', newline='')
+        with open(DATA_FILE, 'w', newline='') as file:
+            data = {
+                'bucket': None,
+                'breaks': [],
+                'closures': []
+            }
 
-        data = {
-            'bucket': None,
-            'breaks': [],
-            'closures': []
-        }
+            json.dump(data, file, sort_keys=False, indent=4)
 
-        json.dump(data, file, sort_keys=False, indent=4)
+            file.close()
 
 
 def create_log_file():
     # Checks if the file does not exist
     if not Path(LOG_FILE).exists():
-        with open(LOG_FILE, 'w', newline='') as log:
-            writer = csv.writer(log, delimiter=',')
+        with open(LOG_FILE, 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=',')
 
             # Create the header
-            writer.writerow(['bucket_number', 'work_time_hrs', 'work_time_sec', 'start_date', 'end_date'])
+            writer.writerow(LOG_FILE_HEADER)
+
+            file.close()
 
 
 def import_config_file():
     create_config_file()  # Creates file if it does not exist
 
-    file = open(CONFIG_FILE, 'r', newline='')
+    with open(CONFIG_FILE, 'r', newline='') as file:
+        config = _format_config(json.load(file))
 
-    config = _format_config(json.load(file))
+        file.close()
 
     return config
 
@@ -61,19 +67,39 @@ def import_config_file():
 def import_data_file():
     create_data_file()  # Creates file if it does not exist
 
-    file = open(DATA_FILE, 'r', newline='')
+    with open(DATA_FILE, 'r', newline='') as file:
+        data = _format_data(json.load(file))
 
-    data = _format_data(json.load(file))
+        file.close()
 
     return data
+
+
+def import_log_file():
+    create_log_file()  # Creates file if it does not exist
+
+    log = list()
+
+    with open(LOG_FILE, 'r', newline='') as file:
+        reader = csv.reader(file, delimiter=',')
+
+        next(reader)  # Skip the headers
+
+        for row in reader:
+            log.append(row)
+
+        file.close()
+
+    return log
 
 
 def write_config_file(config):
     config = _format_config(config)
 
-    file = open(CONFIG_FILE, 'w', newline='')
+    with open(CONFIG_FILE, 'w', newline='') as file:
+        json.dump(config, file, sort_keys=False, indent=4)
 
-    json.dump(config, file, sort_keys=False, indent=4)
+        file.close()
 
 
 def write_data_file(data):
@@ -87,9 +113,22 @@ def write_data_file(data):
         if (today - day).days > 365:
             data['closures'].remove(closure)
 
-    file = open(DATA_FILE, 'w', newline='')
+    with open(DATA_FILE, 'w', newline='') as file:
+        json.dump(data, file, sort_keys=False, indent=4)
 
-    json.dump(data, file, sort_keys=False, indent=4)
+        file.close()
+
+
+def write_log_file(log):
+    with open(LOG_FILE, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=',')
+
+        writer.writerow(LOG_FILE_HEADER)
+
+        for row in log:
+            writer.writerow(row)
+
+        file.close()
 
 
 def _format_config(config):

@@ -24,6 +24,13 @@ DATA_FILE_KEYS = [
     'breaks',
     'closures'
 ]
+LOG_FILE_HEADER = [
+    'bucket_number',
+    'work_time_hrs',
+    'work_time_sec',
+    'start_date',
+    'end_date'
+]
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'  # Constants
 SEC_PER_HOUR = 3600                   #

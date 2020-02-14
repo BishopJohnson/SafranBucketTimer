@@ -7,7 +7,6 @@ from src.widgets.rootwidget import RootWidget
 from src.workbreak import WorkBreak
 
 import csv
-import os
 from datetime import date, datetime, timedelta
 from kivy.app import App
 from kivy.clock import Clock as ClkEvent
@@ -161,7 +160,6 @@ class MyApp(App):
     def __init__(self):
         super(MyApp, self).__init__()
         self.__brk_list = list()
-        self.__buckets = list()
         self.__clock = Clk()
         self.__clock_event = None
         self.__closure_list = list()
@@ -170,13 +168,7 @@ class MyApp(App):
         self.__data_cache = None
         self.__gui = None
         self.__is_bucket_running = False
-        self.__max_size = 5
-        self.__size = 0
-        self.__times = list()
-
-    @property
-    def buckets(self):
-        return self.__buckets.copy()
+        self.__log_cache = None
 
     @property
     def clock(self):
@@ -199,20 +191,12 @@ class MyApp(App):
         return self.__is_bucket_running
 
     @property
-    def max_size(self):
-        return self.__max_size
-
-    @property
     def gui(self):
         return self.__gui
 
     @property
-    def size(self):
-        return self.__size
-
-    @property
-    def times(self):
-        return self.__times.copy()
+    def log_cache(self):
+        return self.__log_cache.copy()
 
     def add_break(self, brk, *args, **kwargs):
         for key in BREAK_KEYS:
@@ -278,6 +262,7 @@ class MyApp(App):
 
         self.__config_cache = import_config_file()
         self.__data_cache = import_data_file()
+        self.__log_cache = import_log_file()
 
         self.__gui = RootWidget(self)
         self.__gui.open_view(Views.MAIN)
@@ -308,19 +293,6 @@ class MyApp(App):
             self.__is_bucket_running = False
             self.__clock.stop_timer()
 
-            # Updates table
-            if not self.__is_old_bucket():
-                self.__update_table(self.__current_bucket_name, self.__clock.timer)
-            else:
-                time = self.__clock.timer
-
-                with open(LOG_FILE, 'r', newline='') as input_log:
-                    for row in csv.reader(input_log, delimiter=','):
-                        if row[0] == self.__current_bucket_name:
-                            time += int(row[2])
-
-                self.__update_table(self.__current_bucket_name, time)
-
             # Logs the bucket statistics
             self.__log_times()
 
@@ -339,9 +311,6 @@ class MyApp(App):
         self.__closure_list = create_closure_list(self.__data_cache)
         self.__assign_break()
         self.__assign_closure()
-
-        # Set the bucket and time lists as lists of past data
-        self.__recent_buckets()
 
         # Schedule the clock event
         self.__clock_event = ClkEvent.schedule_interval(self.update, 0)
@@ -469,78 +438,44 @@ class MyApp(App):
 
         write_data_file(self.__data_cache)
 
-    def __is_old_bucket(self):
-        with open(LOG_FILE, 'r', newline='') as input_log:
-            for row in csv.reader(input_log, delimiter=','):
-                # Checks if the bucket was already logged
-                if row[0] == self.__current_bucket_name:
-                    return True
-
-        return False
-
     def __log_times(self):
-        # Create the log file if it does not exist
-        create_log_file()
-
-        time = self.__clock.timer  # Stores the current bucket's time
+        name = self.__current_bucket_name
+        time = self.__clock.timer
         start_date = self.__clock.timer_start_time()
+        end_date = self.__clock.timer_end_time()
 
-        with open(LOG_FILE, 'r', newline='') as input_log, open(f'$~{LOG_FILE}', 'w', newline='') as output_log:
-            writer = csv.writer(output_log, delimiter=',')
+        exp_date = self.__clock.time + timedelta(days=-7)  # Expiration date is seven day before now
 
-            for row in csv.reader(input_log, delimiter=','):
-                # Checks if the bucket was already logged
-                if row[0] == self.__current_bucket_name:
-                    time += int(row[2])
+        # Combines any recent buckets with this bucket
+        i = 0
+        while i < len(self.__log_cache):
+            past_bkt = self.__log_cache[i]
+            past_bkt_name = past_bkt[0]
+            past_bkt_end = datetime.strptime(past_bkt[4], DATE_FORMAT)
 
-                    # Gets the earliest start date for duplicate buckets
-                    logged_start = datetime.strptime(row[3], DATE_FORMAT)
-                    if logged_start < start_date:
-                        start_date = logged_start
-                else:
-                    writer.writerow(row)
+            if past_bkt_name == name and past_bkt_end >= exp_date:
+                time += int(past_bkt[2])
 
-        with open(f'$~{LOG_FILE}', 'r', newline='') as input_log, open(LOG_FILE, 'w', newline='') as output_log:
-            writer = csv.writer(output_log, delimiter=',')
+                # Checks if the logged start date is further in the past
+                logged_start_date = datetime.strptime(past_bkt[3], DATE_FORMAT)
+                if logged_start_date < start_date:
+                    start_date = logged_start_date
 
-            for row in csv.reader(input_log, delimiter=','):
-                writer.writerow(row)
-
-            writer.writerow([self.__current_bucket_name,
-                             '{:.2f} Hrs'.format(time / SEC_PER_HOUR),
-                             time,
-                             start_date,
-                             self.__clock.timer_end_time()])
-
-        os.remove(f'$~{LOG_FILE}')  # Removes temp file
-
-    def __recent_buckets(self):
-        count = 0
-        buckets = list()
-        times = list()
-
-        try:
-            with open(LOG_FILE, newline='') as data_file:
-                reader = csv.reader(data_file, delimiter=',')
-
-                next(reader)  # Skips the headers
-
-                # Gets the bucket names and times (sec)
-                for row in reader:
-                    buckets.append(row[0])
-                    times.append(row[2])
-                    count += 1
-        except FileNotFoundError:
-            print("No log file to get recent bucket times from.")
-
-            # Create the log file if it does not exist
-            create_log_file()
-        finally:
-            # Iterates over the last few desired entries and adds them to the table
-            i = max(0, count - self.__max_size)
-            while i < count:
-                self.__update_table(str(buckets[i]), int(times[i]))
+                self.__log_cache.pop(i)
+            else:
                 i += 1
+
+        self.__log_cache.append([
+            name,
+            '{:.2f} Hrs'.format(time / SEC_PER_HOUR),
+            str(time),
+            str(start_date),
+            str(end_date)
+        ])
+
+        write_log_file(self.__log_cache)
+
+        self.__gui.notify()
 
     def __reset_bucket(self):
         self.__current_bucket_name = ''
@@ -606,26 +541,3 @@ class MyApp(App):
             }
 
         write_data_file(self.__data_cache)
-
-    def __update_table(self, name, time):
-        # Removes buckets with the same names from the list
-        i = 0
-        while i < self.__size:
-            if self.__buckets[i] == name:
-                self.__buckets.pop(i)
-                self.__times.pop(i)
-                self.__size -= 1
-            else:
-                i += 1
-
-        # Checks if the table is not full
-        if self.__size < self.__max_size:
-            self.__size += 1
-        else:
-            self.__buckets.pop(self.__max_size - 1)  # Removes elements at the
-            self.__times.pop(self.__max_size - 1)    # end of the lists.
-
-        self.__buckets.insert(0, name)  # Inserts elements at the
-        self.__times.insert(0, time)    # front of the lists.
-
-        self.__gui.notify()
