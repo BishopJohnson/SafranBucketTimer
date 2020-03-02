@@ -52,15 +52,15 @@ class MainWidget(FloatLayout, AppWidget):
 
         # Tries to format the goal time if it's a float
         try:
-            self.bkt_goal_time.text = f'{float(goal_time):.02f} Hrs'
+            self.bkt_goal_time.text = '{:.02f} Hrs'.format(float(goal_time))
         except ValueError:
-            self.bkt_goal_time.text = f'{goal_time} Hrs'
+            self.bkt_goal_time.text = '{} Hrs'.format(goal_time)
 
         # Appends 's if team name was set
         if len(team_name) > 0:
-            team_name = f'{team_name}\'s '
+            team_name = '{} '.format(team_name)
 
-        self.team_label.text = f'{team_name.upper()}BUCKET TIME TRACKER'
+        self.team_label.text = '{}BUCKET TIME TRACKER'.format(team_name.upper())
 
         self.__update_buttons()
         self.__update_current_buckets()
@@ -97,20 +97,20 @@ class MainWidget(FloatLayout, AppWidget):
             if isinstance(bucket_one, Timer):
                 # Time keeping with hours, minutes, and seconds
                 # (hours, minutes, seconds) = hours_minutes_seconds(bucket_one.seconds)
-                # self.bkt_one_time.text = f'{hours}:{minutes}:{seconds}'
+                # self.bkt_one_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
 
                 # Time keeping with only hours
                 time = bucket_one.seconds / SEC_PER_HOUR
-                self.bkt_one_time.text = f'{time:.2f} Hrs'
+                self.bkt_one_time.text = '{:.2f} Hrs'.format(time)
 
             if isinstance(bucket_two, Timer):
                 # Time keeping with hours, minutes, and seconds
                 # (hours, minutes, seconds) = hours_minutes_seconds(bucket_two.seconds)
-                # self.bkt_two_time.text = f'{hours}:{minutes}:{seconds}'
+                # self.bkt_two_time.text = '{}:{}:{}'.format(hours, minutes, seconds)
 
                 # Time keeping with only hours
                 time = bucket_two.seconds / SEC_PER_HOUR
-                self.bkt_two_time.text = f'{time:.2f} Hrs'
+                self.bkt_two_time.text = '{:.2f} Hrs'.format(time)
 
         # Handles the clock ui
         now = self.__app.clock.time
@@ -132,7 +132,12 @@ class MainWidget(FloatLayout, AppWidget):
             if hour > 12:
                 hour = hour % 12
 
-        self.clock.text = f'{hour:02d}:{minute:02d} {period:s}    {month:02d}/{day:02d}/{year:d}'
+        self.clock.text = '{:02d}:{:02d} {:s}    {:02d}/{:02d}/{:d}'.format(hour,
+                                                                            minute,
+                                                                            period,
+                                                                            month,
+                                                                            day,
+                                                                            year)
 
         # Handles closure and break texts
         if self.__app.clock.is_closure():

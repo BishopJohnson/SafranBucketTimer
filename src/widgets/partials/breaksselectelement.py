@@ -152,10 +152,10 @@ class BreaksSelectElement(RelativeLayout, AppWidget):
         self.__weekday_elem.set_text(text)
 
     def __update_hour_text(self):
-        self.__hour_elem.set_text(f'{self.__hour:02d}')
+        self.__hour_elem.set_text('{:02d}'.format(self.__hour))
 
     def __update_minute_text(self):
-        self.__minute_elem.set_text(f'{self.__minute:02d}')
+        self.__minute_elem.set_text('{:02d}'.format(self.__minute))
 
     def __update_period_text(self):
         self.__period_elem.set_text(self.__period)

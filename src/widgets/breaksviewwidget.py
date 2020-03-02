@@ -44,7 +44,7 @@ def format_time(weekday, hour, minute):
         if hour > 12:
             hour = hour % 12
 
-    return f'{weekday_text} {hour}:{minute:02d} {period}'
+    return '{} {}:{:02d} {}'.format(weekday_text, hour, minute, period)
 
 
 class BreaksViewWidget(FloatLayout, AppWidget):

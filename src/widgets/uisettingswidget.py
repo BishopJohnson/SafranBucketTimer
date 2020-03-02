@@ -73,7 +73,7 @@ class UISettingsWidget(FloatLayout, AppWidget):
             else:
                 layout = TableLayout2()
 
-            label = TableText(text=f'  {_config_key2name(key)}:')
+            label = TableText(text='  {}:'.format(_config_key2name(key)))
             text_input = TableTextInput(text=str(self.__app.config_cache[key]))
 
             layout.add_widget(label)

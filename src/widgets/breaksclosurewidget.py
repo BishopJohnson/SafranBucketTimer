@@ -128,7 +128,7 @@ class BreaksClosuresWidget(FloatLayout, AppWidget):
         for tile in range(7, tiles):
             if month_start.day <= day <= month_end.day:
                 btn_day = date(year, month, day)
-                text = f'{day}'
+                text = '{}'.format(day)
                 btn = BreaksClosuresDayBtn(day=btn_day,
                                            activate_callback=partial(self.__add_closure, btn_day),
                                            deactivate_callback=partial(self.__remove_closure, btn_day),
@@ -183,7 +183,7 @@ class BreaksClosuresWidget(FloatLayout, AppWidget):
         else:
             text = ''
 
-        self.__month_elem.set_text(f'{text} {self.__date.year}')
+        self.__month_elem.set_text('{} {}'.format(text, self.__date.year))
 
 
 class BreaksClosuresDayBtn(Button):
