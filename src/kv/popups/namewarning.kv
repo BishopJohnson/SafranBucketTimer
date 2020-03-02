@@ -1,3 +1,6 @@
+# namewarning.kv
+
+
 <NameWarning>:
     size_hint: 0.8, 0.6
     auto_dismiss: False
@@ -11,18 +14,20 @@
             font_size: 24
             halign: 'center'
 
-        Button:
-            pos_hint: {'x': 0.6, 'y': 0.2}
-            size_hint: 0.3, 0.3
-            text: 'YES'
-            bold: 1
-            font_size: 24
-            on_release: root.accept()
-
+        # The left button
         Button:
             pos_hint: {'x': 0.1, 'y': 0.2}
             size_hint: 0.3, 0.3
             text: 'NO'
             bold: 1
             font_size: 24
-            on_release: root.cancel()
+            on_release: root.left_btn()
+
+        # The right button
+        Button:
+            pos_hint: {'x': 0.6, 'y': 0.2}
+            size_hint: 0.3, 0.3
+            text: 'YES'
+            bold: 1
+            font_size: 24
+            on_release: root.right_btn()

@@ -31,7 +31,8 @@ def create_data_file():
     if not Path(DATA_FILE).exists():
         with open(DATA_FILE, 'w', newline='') as file:
             data = {
-                'bucket': None,
+                'bucket_one': None,
+                'bucket_two': None,
                 'breaks': [],
                 'closures': []
             }
@@ -147,8 +148,10 @@ def _format_data(data):
     for key in DATA_FILE_KEYS:
         # TODO: Assign the values in a smarter fashion that doesn't rely on knowing the types in this function.
         if key not in data:
-            if key == 'bucket':
-                data.update(bucket=None)
+            if key == 'bucket_one':
+                data.update(bucket_one=None)
+            if key == 'bucket_two':
+                data.update(bucket_two=None)
             elif key == 'breaks':
                 data.update(breaks=[])
             elif key == 'closures':

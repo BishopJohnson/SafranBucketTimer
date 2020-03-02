@@ -1,0 +1,46 @@
+# cancelbucket.kv
+
+
+<CancelBucket>:
+    # The Id's for the widgets modified during runtime
+    mid_btn_id: mid_btn_id
+    right_btn_id: right_btn_id
+
+    size_hint: 0.8, 0.6
+    auto_dismiss: False
+    title: 'CANCEL BUCKET'
+
+    FloatLayout:
+        Label:
+            pos_hint: {'x': 0.0, 'y': 0.5}
+            size_hint: 1.0, 0.5
+            text: 'Which bucket would you like to cancel?'
+            font_size: 24
+            halign: 'center'
+
+        # The left button
+        Button:
+            pos_hint: {'x': 0.1, 'y': 0.2}
+            size_hint: 0.2, 0.2
+            text: 'BACK'
+            bold: 1
+            font_size: 24
+            on_release: root.left_btn()
+
+        # The middle button
+        Button:
+            id: mid_btn_id
+            pos_hint: {'x': 0.4, 'y': 0.2}
+            size_hint: 0.2, 0.2
+            bold: 1
+            font_size: 24
+            on_release: root.mid_btn()
+
+        # The right button
+        Button:
+            id: right_btn_id
+            pos_hint: {'x': 0.7, 'y': 0.2}
+            size_hint: 0.2, 0.2
+            bold: 1
+            font_size: 24
+            on_release: root.right_btn()

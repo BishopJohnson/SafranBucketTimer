@@ -1,13 +1,15 @@
 # Custom packages
+import src.fileprocessing as fp
+from src.timer import Timer
 from src.clock import Clock as Clk
 from src.define import *
-from src.fileprocessing import *
-from src.widgets.popup import NameWarning
+from src.widgets.popups import *
 from src.widgets.rootwidget import RootWidget
 from src.workbreak import WorkBreak
 
 import csv
 from datetime import date, datetime, timedelta
+from functools import partial
 from kivy.app import App
 from kivy.clock import Clock as ClkEvent
 from operator import attrgetter
@@ -124,6 +126,22 @@ def join_breaks(first, second):
     return result
 
 
+def _check_bucket_name(name):
+    try:
+        with open(NAMES_FILE, newline='') as data_file:
+            reader = csv.reader(data_file, delimiter=',')
+
+            # Iterates for each row in the data file
+            for row in reader:
+                # Checks if the bucket name exists in the data file
+                if row[0] == name:
+                    return True
+    except FileNotFoundError:
+        return True  # Return true if the file cannot be found
+
+    return False  # Return false if the bucket name was not found
+
+
 def _construct_temp_break(brk):
     for key in BREAK_KEYS:
         if key not in brk:
@@ -159,16 +177,26 @@ def _construct_temp_break(brk):
 class MyApp(App):
     def __init__(self):
         super(MyApp, self).__init__()
+
         self.__brk_list = list()
+        self.__bucket_one = None
+        self.__bucket_two = None
         self.__clock = Clk()
         self.__clock_event = None
         self.__closure_list = list()
-        self.__current_bucket_name = ''
         self.__config_cache = None
         self.__data_cache = None
         self.__gui = None
-        self.__is_bucket_running = False
         self.__log_cache = None
+        self.__max_name_length = 6
+
+    @property
+    def bucket_one(self):
+        return self.__bucket_one
+
+    @property
+    def bucket_two(self):
+        return self.__bucket_two
 
     @property
     def clock(self):
@@ -179,16 +207,8 @@ class MyApp(App):
         return self.__config_cache.copy()
 
     @property
-    def current_bucket_name(self):
-        return self.__current_bucket_name
-
-    @property
     def data_cache(self):
         return self.__data_cache.copy()
-
-    @property
-    def is_bucket_running(self):
-        return self.__is_bucket_running
 
     @property
     def gui(self):
@@ -197,6 +217,10 @@ class MyApp(App):
     @property
     def log_cache(self):
         return self.__log_cache.copy()
+
+    @property
+    def max_name_length(self):
+        return self.__max_name_length
 
     def add_break(self, brk, *args, **kwargs):
         for key in BREAK_KEYS:
@@ -212,11 +236,11 @@ class MyApp(App):
 
                 return self.add_break(joined_brk)  # Recursive call to add the joined break
 
-        if self.__is_bucket_running:
+        if self.is_bucket_running():
             self.__update_bucket_saved_data()
 
         self.__data_cache['breaks'].append(brk)
-        write_data_file(self.__data_cache)
+        fp.write_data_file(self.__data_cache)
 
         # Recreates the break list with the new break
         self.__brk_list = create_break_list(self.__data_cache)
@@ -236,11 +260,11 @@ class MyApp(App):
             if current_closure == closure:
                 return False
 
-        if self.__is_bucket_running:
+        if self.is_bucket_running():
             self.__update_bucket_saved_data()
 
         self.__data_cache['closures'].append(closure)
-        write_data_file(self.__data_cache)
+        fp.write_data_file(self.__data_cache)
 
         # Recreates the closure list with the new closure
         self.__closure_list = create_closure_list(self.__data_cache)
@@ -250,19 +274,12 @@ class MyApp(App):
 
         return True
 
-    def append_bucket_name(self, digit, *args, **kwargs):
-        # Checks if the name length is less than six
-        if len(self.__current_bucket_name) < 6:
-            self.__current_bucket_name += str(digit)
-
-            self.__gui.notify()
-
     def build(self):
         super(MyApp, self).build()
 
-        self.__config_cache = import_config_file()
-        self.__data_cache = import_data_file()
-        self.__log_cache = import_log_file()
+        self.__config_cache = fp.import_config_file()
+        self.__data_cache = fp.import_data_file()
+        self.__log_cache = fp.import_log_file()
 
         self.__gui = RootWidget(self)
         self.__gui.open_view(Views.MAIN)
@@ -270,36 +287,48 @@ class MyApp(App):
         return self.__gui
 
     def cancel_bucket(self, *args, **kwargs):
-        if self.__is_bucket_running:
-            self.__is_bucket_running = False
-            self.__clock.stop_timer()
-            self.__clear_bucket_saved_data()
-            self.__reset_bucket()
+        bucket_one = self.__bucket_one
+        bucket_two = self.__bucket_two
 
-            self.__gui.notify()
+        if bucket_one is not None and bucket_two is not None:  # Both buckets are running
+            popup = CancelBucket(self,
+                                 self.__max_name_length,
+                                 bucket_one_callback=partial(self.__cancel_bucket, bucket_one),
+                                 bucket_two_callback=partial(self.__cancel_bucket, bucket_two))
+            popup.open()
+        elif bucket_one is not None:  # Only bucket one is running
+            self.__cancel_bucket(bucket_one)
+        elif bucket_two is not None:  # Only bucket two is running
+            self.__cancel_bucket(bucket_two)
 
-    def cancel_bucket_name(self, *args, **kwargs):
-        self.__reset_bucket()
-
-    def enter_bucket_name(self, *args, **kwargs):
+    def enter_bucket_name(self, name, *args, **kwargs):
         # Checks if the bucket name exists in the names file
-        if not self.__check_bucket_name():
-            NameWarning(self).open()  # Opens a popup menu
+        if not _check_bucket_name(name):
+            popup = NameWarning(accept_callback=partial(self.start_bucket, name))
+            popup.open()
         else:
-            self.start_bucket()
+            self.start_bucket(name)
 
     def finish_bucket(self, *args, **kwargs):
-        if self.__is_bucket_running:
-            self.__is_bucket_running = False
-            self.__clock.stop_timer()
+        bucket_one = self.__bucket_one
+        bucket_two = self.__bucket_two
 
-            # Logs the bucket statistics
-            self.__log_times()
+        if bucket_one is not None and bucket_two is not None:  # Both buckets are running
+            popup = FinishBucket(self,
+                                 self.__max_name_length,
+                                 bucket_one_callback=partial(self.__finish_bucket, bucket_one),
+                                 bucket_two_callback=partial(self.__finish_bucket, bucket_two))
+            popup.open()
+        elif bucket_one is not None:  # Only bucket one is running
+            self.__finish_bucket(bucket_one)
+        elif bucket_two is not None:  # Only bucket two is running
+            self.__finish_bucket(bucket_two)
 
-            self.__clear_bucket_saved_data()
-            self.__reset_bucket()
+    def is_bucket_running(self):
+        if self.__bucket_one is not None or self.__bucket_two is not None:
+            return True
 
-            self.__gui.notify()
+        return False
 
     def on_start(self):
         super(MyApp, self).on_start()
@@ -315,10 +344,8 @@ class MyApp(App):
         # Schedule the clock event
         self.__clock_event = ClkEvent.schedule_interval(self.update, 0)
 
-        if self.__data_cache['bucket'] is not None:
-            # TODO: Open popup to ask if user wants to resume the bucket.
-
-            self.__resume_bucket()
+        # TODO: Open popup to ask if user wants to resume the bucket.
+        self.__resume_bucket()
 
         self.__gui.notify()
 
@@ -335,9 +362,9 @@ class MyApp(App):
 
         if brk in self.__data_cache['breaks']:
             self.__data_cache['breaks'].remove(brk)
-            write_data_file(self.__data_cache)
+            fp.write_data_file(self.__data_cache)
 
-            if self.__is_bucket_running:
+            if self.is_bucket_running():
                 self.__update_bucket_saved_data()
 
             # Recreates the break list without the removed break
@@ -357,9 +384,9 @@ class MyApp(App):
 
         if closure in self.__data_cache['closures']:
             self.__data_cache['closures'].remove(closure)
-            write_data_file(self.__data_cache)
+            fp.write_data_file(self.__data_cache)
 
-            if self.__is_bucket_running:
+            if self.is_bucket_running():
                 self.__update_bucket_saved_data()
 
             # Recreates the closure list without the removed closure
@@ -372,10 +399,20 @@ class MyApp(App):
 
         return False
 
-    def start_bucket(self, *args, **kwargs):
-        if not self.__is_bucket_running:
-            self.__is_bucket_running = True
-            self.__clock.start_timer()
+    def start_bucket(self, name, *args, **kwargs):
+        # Checks which bucket to start
+        if self.__bucket_one is None:
+            self.__bucket_one = Timer(name)
+            timer = self.__bucket_one
+        elif self.__bucket_two is None:
+            self.__bucket_two = Timer(name)
+            timer = self.__bucket_two
+        else:
+            timer = None
+
+        # Checks if a timer was started
+        if timer is not None:
+            self.__clock.add_timer(timer)
             self.__update_bucket_saved_data()
 
             self.__gui.notify()
@@ -390,7 +427,7 @@ class MyApp(App):
             if key in CONFIG_FILE_KEYS:
                 self.__config_cache[key] = config[key]
 
-        write_config_file(self.__config_cache)
+        fp.write_config_file(self.__config_cache)
 
         self.__gui.notify()
 
@@ -418,31 +455,37 @@ class MyApp(App):
         else:
             self.__clock.assign_closure(None)
 
-    def __check_bucket_name(self):
-        try:
-            with open(NAMES_FILE, newline='') as data_file:
-                reader = csv.reader(data_file, delimiter=',')
+    def __cancel_bucket(self, bucket):
+        bucket = self.__pop_bucket(bucket)
 
-                # Iterates for each row in the data file
-                for row in reader:
-                    # Checks if the bucket name exists in the data file
-                    if row[0] == self.__current_bucket_name:
-                        return True
-        except FileNotFoundError:
-            return True  # Return true if the file cannot be found
+        if bucket is not None:
+            self.__clock.stop_timer(bucket)
 
-        return False  # Return false if the bucket name was not found
+            # Updates bucket statistics
+            self.__update_bucket_saved_data()
 
-    def __clear_bucket_saved_data(self):
-        self.__data_cache['bucket'] = None
+            self.__gui.notify()
 
-        write_data_file(self.__data_cache)
+    def __finish_bucket(self, bucket):
+        bucket = self.__pop_bucket(bucket)
 
-    def __log_times(self):
-        name = self.__current_bucket_name
-        time = self.__clock.timer
-        start_date = self.__clock.timer_start_time()
-        end_date = self.__clock.timer_end_time()
+        if bucket is not None:
+            self.__clock.stop_timer(bucket)
+
+            # Logs and updates bucket statistics
+            self.__log_times(bucket)
+            self.__update_bucket_saved_data()
+
+            self.__gui.notify()
+
+    def __log_times(self, bucket):
+        if not isinstance(bucket, Timer):
+            raise TypeError
+
+        name = bucket.name
+        time = bucket.seconds
+        start_date = bucket.start_time
+        end_date = bucket.end_time
 
         exp_date = self.__clock.time + timedelta(days=-7)  # Expiration date is seven day before now
 
@@ -473,19 +516,62 @@ class MyApp(App):
             str(end_date)
         ])
 
-        write_log_file(self.__log_cache)
+        fp.write_log_file(self.__log_cache)
 
         self.__gui.notify()
 
-    def __reset_bucket(self):
-        self.__current_bucket_name = ''
+    def __pop_bucket(self, bucket):
+        if not isinstance(bucket, Timer):
+            raise TypeError
 
-        self.__gui.notify()
+        if bucket == self.__bucket_one:  # Pop bucket one
+            bucket = self.__bucket_one
+            self.__bucket_one = self.__bucket_two  # Move bucket two forward
+            self.__bucket_two = None               #
+        elif bucket == self.__bucket_two:  # Pop bucket two
+            bucket = self.__bucket_two
+            self.__bucket_two = None
+        else:
+            return None
+
+        return bucket
 
     def __resume_bucket(self):
-        bucket = self.__data_cache['bucket']
+        # Handles the old bucket key
+        bucket = self.__data_cache.pop('bucket', None)
+        timer = self.__resume_bucket_timer(bucket)
+        if bucket is not None and timer is not None:
+            if self.__data_cache['bucket_one'] is None:
+                self.__data_cache['bucket_one'] = bucket
+            elif self.__data_cache['bucket_two'] is None:
+                self.__data_cache['bucket_two'] = bucket
+            else:
+                self.__log_times(timer)
 
-        if bucket is not None:
+        bucket_one = self.__resume_bucket_timer(self.__data_cache['bucket_one'])
+        bucket_two = self.__resume_bucket_timer(self.__data_cache['bucket_two'])
+
+        # Front-loads bucket two if bucket one is empty
+        if bucket_one is None and isinstance(bucket_two, Timer):
+            bucket_one = bucket_two
+            bucket_two = None
+            self.__data_cache['bucket_one'] = self.__data_cache['bucket_two']
+            self.__data_cache['bucket_two'] = None
+
+        if isinstance(bucket_one, Timer):
+            self.__bucket_one = bucket_one
+            self.__clock.add_timer(self.__bucket_one)
+
+        if isinstance(bucket_two, Timer):
+            self.__bucket_two = bucket_two
+            self.__clock.add_timer(self.__bucket_two)
+
+        self.__update_bucket_saved_data()
+
+        self.__gui.notify()
+
+    def __resume_bucket_timer(self, bucket):
+        try:
             # Formats the continuous date back to a datetime object
             cont_date = datetime.strptime(bucket['continuous_date'], DATE_FORMAT)
 
@@ -519,25 +605,42 @@ class MyApp(App):
             for brk in brk_list:
                 seconds = max(0, seconds - brk.seconds(cont_date, now))
 
-            self.__is_bucket_running = True
-            self.__current_bucket_name = bucket['name']
-            self.__clock.start_timer(seconds=bucket['time_running'] + seconds)
-
-            self.__gui.notify()
+            return Timer(bucket['name'],
+                         seconds=seconds + int(bucket['time_running']),
+                         start_time=datetime.strptime(bucket['start_date'], DATE_FORMAT))
+        except (TypeError, KeyError):
+            return None  # Returns no timer if an error occurs
 
     def __update_bucket_saved_data(self):
-        bucket = self.__data_cache['bucket']
+        bucket_one = self.__data_cache['bucket_one']
+        bucket_two = self.__data_cache['bucket_two']
+
         now = self.__clock.time
 
-        if bucket is not None:
-            bucket['continuous_date'] = str(now)
-            bucket['time_running'] = self.__clock.timer
-        else:
-            self.__data_cache['bucket'] = {
-                'name': self.__current_bucket_name,
-                'start_date': str(now),
+        if bucket_one is not None and isinstance(self.__bucket_one, Timer):
+            bucket_one['continuous_date'] = str(now)
+            bucket_one['time_running'] = self.__bucket_one.seconds
+        elif isinstance(self.__bucket_one, Timer):
+            self.__data_cache['bucket_one'] = {
+                'name': self.__bucket_one.name,
+                'start_date': str(self.__bucket_one.start_time),
                 'continuous_date': str(now),
-                'time_running': 0
+                'time_running': self.__bucket_one.seconds
             }
+        else:
+            self.__data_cache['bucket_one'] = None
 
-        write_data_file(self.__data_cache)
+        if bucket_two is not None and isinstance(self.__bucket_two, Timer):
+            bucket_two['continuous_date'] = str(now)
+            bucket_two['time_running'] = self.__bucket_two.seconds
+        elif isinstance(self.__bucket_two, Timer):
+            self.__data_cache['bucket_two'] = {
+                'name': self.__bucket_two.name,
+                'start_date': str(self.__bucket_two.start_time),
+                'continuous_date': str(now),
+                'time_running': self.__bucket_two.seconds
+            }
+        else:
+            self.__data_cache['bucket_two'] = None
+
+        fp.write_data_file(self.__data_cache)
