@@ -2,35 +2,36 @@ from enum import Enum
 from math import floor
 
 
-BREAK_KEYS = [
+BREAK_KEYS = {
     'start_weekday',
     'start_hour',
     'start_minute',
     'end_weekday',
     'end_hour',
     'end_minute'
-]
-CLOSURE_KEYS = [
+}
+CLOSURE_KEYS = {
     'year',
     'month',
     'day'
-]
-CONFIG_FILE_KEYS = [
+}
+CONFIG_FILE_KEYS = {
     'team_name',
     'goal_time'
-]
-DATA_FILE_KEYS = [
-    'bucket',
+}
+DATA_FILE_KEYS = {
+    'bucket_one',
+    'bucket_two',
     'breaks',
     'closures'
-]
-LOG_FILE_HEADER = [
+}
+LOG_FILE_HEADER = {
     'bucket_number',
     'work_time_hrs',
     'work_time_sec',
     'start_date',
     'end_date'
-]
+}
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'  # Constants
 SEC_PER_HOUR = 3600                   #

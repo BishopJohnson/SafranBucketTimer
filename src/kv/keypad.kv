@@ -1,5 +1,6 @@
 <Keypad>:
     # The Id's of the buttons used by the keypad
+    num_text: num_text
     btn_0: btn_0  # Numbered buttons
     btn_1: btn_1  #
     btn_2: btn_2  #
@@ -17,57 +18,67 @@
     width: 180
     height: 180
 
-    GridLayout:
-        rows: 4
-        cols: 3
+    BoxLayout:
+        orientation: 'vertical'
 
-        KeypadBtn:
-            id: btn_1
-            text: '1'
+        Label:
+            size_hint_y: 0.3
+            id: num_text
+            text: ''
+            bold: 1
+            color: 1, 1, 1, 1
 
-        KeypadBtn:
-            id: btn_2
-            text: '2'
+        GridLayout:
+            rows: 4
+            cols: 3
 
-        KeypadBtn:
-            id: btn_3
-            text: '3'
+            KeypadBtn:
+                id: btn_1
+                text: '1'
 
-        KeypadBtn:
-            id: btn_4
-            text: '4'
+            KeypadBtn:
+                id: btn_2
+                text: '2'
 
-        KeypadBtn:
-            id: btn_5
-            text: '5'
+            KeypadBtn:
+                id: btn_3
+                text: '3'
 
-        KeypadBtn:
-            id: btn_6
-            text: '6'
+            KeypadBtn:
+                id: btn_4
+                text: '4'
 
-        KeypadBtn:
-            id: btn_7
-            text: '7'
+            KeypadBtn:
+                id: btn_5
+                text: '5'
 
-        KeypadBtn:
-            id: btn_8
-            text: '8'
+            KeypadBtn:
+                id: btn_6
+                text: '6'
 
-        KeypadBtn:
-            id: btn_9
-            text: '9'
+            KeypadBtn:
+                id: btn_7
+                text: '7'
 
-        KeypadBtn:
-            id: btn_cancel
-            text: 'cancel'
+            KeypadBtn:
+                id: btn_8
+                text: '8'
 
-        KeypadBtn:
-            id: btn_0
-            text: '0'
+            KeypadBtn:
+                id: btn_9
+                text: '9'
 
-        KeypadBtn:
-            id: btn_enter
-            text: 'enter'
+            KeypadBtn:
+                id: btn_cancel
+                text: 'cancel'
+
+            KeypadBtn:
+                id: btn_0
+                text: '0'
+
+            KeypadBtn:
+                id: btn_enter
+                text: 'enter'
 
 
 <KeypadBtn@Button>:

@@ -7,6 +7,5 @@ from .breaksviewwidget import BreaksViewWidget
 from .keypad import Keypad
 from .mainwidget import MainWidget
 from .optionswidget import OptionsWidget
-from .popup import *
 from .rootwidget import RootWidget
 from .uisettingswidget import UISettingsWidget

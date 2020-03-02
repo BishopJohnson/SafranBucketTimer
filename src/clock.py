@@ -1,8 +1,8 @@
 # Custom packages
+from src.timer import Timer
 from src.workbreak import WorkBreak
 
 from datetime import date, datetime
-from math import floor
 
 
 class Clock:
@@ -12,18 +12,17 @@ class Clock:
         self.__closure = None
         self.__closure_callback = None
         self.__time = datetime.now()
-        self.__timer = 0
-        self.__timer_end_time = None
-        self.__timer_running = False
-        self.__timer_start_time = None
+        self.__timers = set()
 
     @property
     def time(self):
         return self.__time
 
-    @property
-    def timer(self):
-        return floor(self.__timer)
+    def add_timer(self, timer):
+        if not isinstance(timer, Timer):
+            raise TypeError
+
+        self.__timers.add(timer)
 
     def assign_break(self, brk, callback=None):
         if brk is None:
@@ -59,30 +58,25 @@ class Clock:
 
         return False
 
-    def start_timer(self, *args, seconds=0, **kwargs):
-        self.__timer = seconds
-        self.__timer_end_time = None
-        self.__timer_start_time = datetime.now()
-        self.__timer_running = True
+    def stop_timer(self, timer):
+        if not isinstance(timer, Timer):
+            raise TypeError
 
-    def stop_timer(self):
-        self.__timer_end_time = datetime.now()
-        self.__timer_running = False
-
-    def timer_end_time(self):
-        return self.__timer_end_time
-
-    def timer_start_time(self):
-        return self.__timer_start_time
+        if timer in self.__timers:
+            self.__timers.remove(timer)
+            timer.stop()
 
     def update(self):
         now = datetime.now()
 
-        # Checks if the timer ought to be updated
-        if self.__timer_running and not (self.is_closure() or self.is_break_time()):
-            self.__timer += (now - self.__time).microseconds / pow(10, 6)  # Converts from microseconds to seconds
+        # Checks if the timers ought to be updated
+        if len(self.__timers) > 0 and not (self.is_closure() or self.is_break_time()):
+            dt = (now - self.__time).microseconds / pow(10, 6)  # Converts from microseconds to seconds
 
-        self.__time = now  # Update the current time
+            for timer in self.__timers:
+                timer.update(dt)
+
+        self.__time = now  # Update the clock's current time
 
         # Checks if the break has ended
         if isinstance(self.__brk, WorkBreak) and self.__time >= self.__brk.end:

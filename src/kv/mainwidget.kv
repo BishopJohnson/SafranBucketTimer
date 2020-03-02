@@ -23,8 +23,10 @@
     time_4: time_4      #
     time_5: time_5      #
     time_avg: time_avg  #
-    bkt_curr_name: bkt_curr_name  # Current bucket name and times
-    bkt_curr_time: bkt_curr_time  #
+    bkt_one_name: bkt_one_name  # Bucket one's name and time
+    bkt_one_time: bkt_one_time  #
+    bkt_two_name: bkt_two_name  # Bucket two's name and time
+    bkt_two_time: bkt_two_time  #
     bkt_goal_time: bkt_goal_time  # Goal time
     team_label: team_label        # Team label
 
@@ -40,101 +42,68 @@
             color: 0, 0, 0, 1
 
         # No assigned break text
-        Label:
+        WarningText:
             id: no_assigned_break_text
             pos_hint: {'x': 0.15, 'y': 0.45}
             size_hint: 0.2, 0.2
             text: 'WARNING: NO ASSIGNED BREAK'
-            bold: 1
-            font_size: 24
-            color: 1, 0, 0, 1
 
         # Break time text
-        Label:
+        WarningText:
             id: pause_text
             pos_hint: {'x': 0.15, 'y': 0.45}
             size_hint: 0.2, 0.2
             text: 'TRACKER PAUSED FOR BREAK'
-            bold: 1
-            font_size: 24
-            color: 1, 0, 0, 1
 
         # Closure time text
-        Label:
+        WarningText:
             id: closure_text
             pos_hint: {'x': 0.15, 'y': 0.45}
             size_hint: 0.2, 0.2
             text: 'TRACKER PAUSED FOR CLOSURE/HOLIDAY'
-            bold: 1
-            font_size: 18
-            color: 1, 0, 0, 1
+            font_size: 18  # Smaller font to fit text
 
         # The grid layout for the bucket time table
         GridLayout:
             rows: 2
-            cols: 2
+            cols: 3
             pos_hint: {'x': 0.05, 'y': 0.6}
             size_hint: 0.4, 0.2
             spacing: 3, 0
 
-            # Label for the current bucket's name
-            Label:
-                id: bkt_curr_name
-                text: 'CURRENT ()'
-                bold: 1
-                font_size: 18
-                color: 1, 1, 1, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.357, 0.608, 0.835, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-
             # Label for the goal column
-            Label:
+            MainWidgetBktTimeText1:
                 text: 'GOAL'
-                bold: 1
-                font_size: 18
-                color: 1, 1, 1, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.357, 0.608, 0.835, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
-            # Label for the current bucket's time
-            Label:
-                id: bkt_curr_time
-                text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            # Label for the first bucket's name
+            MainWidgetBktTimeText1:
+                id: bkt_one_name
+                text: 'PRIORITY 1\n----'
+
+            # Label for the second bucket's name
+            MainWidgetBktTimeText1:
+                id: bkt_two_name
+                text: 'PRIORITY 2\n----'
 
             # Label for the goal time
-            Label:
+            MainWidgetBktTimeText2:
                 id: bkt_goal_time
                 text: '0.00 Hrs'
-                bold: 1
-                font_size: 18
-                color: 0, 0, 0, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.815, 0.871, 0.937, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
 
+            # Label for the first bucket's time
+            MainWidgetBktTimeText2:
+                id: bkt_one_time
+                text: '0.00 Hrs'
+
+            # Label for the second bucket's time
+            MainWidgetBktTimeText2:
+                id: bkt_two_time
+                text: '0.00 Hrs'
+
+        # Company logo
         Image:
             source: 'img/logo.png'
-            pos_hint: {'x': 0.05, 'y': 0.75}
+            pos_hint: {'x': 0.1, 'y': 0.75}
             size_hint: 0.3, 0.3
 
         Label:
@@ -256,12 +225,43 @@
     background_color: 0.357, 0.608, 0.835, 1
 
 
+# Label for current bucket name and time element
+<MainWidgetBktTimeText@Label>:
+    bold: 1
+    font_size: 18
+    halign: 'center'
+
+
+# The top row of current bucket name and time element
+<MainWidgetBktTimeText1@MainWidgetBktTimeText>:
+    color: 1, 1, 1, 1
+    canvas.before:
+        Color:
+            rgba: 0.357, 0.608, 0.835, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+# The bottom row of current bucket name and time element
+<MainWidgetBktTimeText2@MainWidgetBktTimeText>:
+    color: 0, 0, 0, 1
+    canvas.before:
+        Color:
+            rgba: 0.815, 0.871, 0.937, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+# Label for the past buckets name and time table
 <MainWidgetBktTableText@Label>:
     bold: 1
     font_size: 18
     color: 0, 0, 0, 1
 
 
+# The primary color of past buckets name and time table
 <MainWidgetBktTableText1@MainWidgetBktTableText>:
     canvas.before:
         Color:
@@ -271,6 +271,7 @@
             size: self.size
 
 
+# The secondary color of past buckets name and time table
 <MainWidgetBktTableText2@MainWidgetBktTableText>:
     canvas.before:
         Color:
@@ -278,3 +279,9 @@
         Rectangle:
             pos: self.pos
             size: self.size
+
+
+<WarningText@Label>:
+    bold: 1
+    font_size: 24
+    color: 1, 0, 0, 1

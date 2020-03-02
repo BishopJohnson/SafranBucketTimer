@@ -2,6 +2,7 @@
 from src.define import hours_minutes_seconds
 from src.define import Views
 from src.define import SEC_PER_HOUR
+from src.timer import Timer
 from src.widgets.appwidget import AppWidget
 from src.widgets.keypad import Keypad
 
@@ -44,13 +45,6 @@ class MainWidget(FloatLayout, AppWidget):
     def notify(self):
         super(MainWidget, self).notify()
 
-        # Updates the bucket name in the UI
-        if self.__app.current_bucket_name == '':
-            self.bkt_curr_name.text = 'CURRENT ()'
-            self.bkt_curr_time.text = '0.00 Hrs'
-        else:
-            self.bkt_curr_name.text = 'CURRENT ({})'.format(self.__app.current_bucket_name)
-
         # Updates UI elements reliant on config data
         config = self.__app.config_cache
         goal_time = config['goal_time']
@@ -69,6 +63,7 @@ class MainWidget(FloatLayout, AppWidget):
         self.team_label.text = f'{team_name.upper()}BUCKET TIME TRACKER'
 
         self.__update_buttons()
+        self.__update_current_buckets()
         self.__update_table()
 
         pass
@@ -80,9 +75,9 @@ class MainWidget(FloatLayout, AppWidget):
         if not self.__keypad_open:
             self.__keypad_open = True
             self.__keypad = Keypad(btn,
-                                   num_callback=self.__app.append_bucket_name,
+                                   max_length=self.__app.max_name_length,
                                    enter_callback=self._keypad_enter_callback,
-                                   cancel_callback=self._keypad_cancel_callback)
+                                   cancel_callback=self.hide_keypad)
 
             btn.add_widget(self.__keypad)
 
@@ -95,14 +90,27 @@ class MainWidget(FloatLayout, AppWidget):
     def update(self):
         super(MainWidget, self).update()
 
-        if self.__app.is_bucket_running:
-            # Time keeping with hours, minutes, and seconds
-            # (hours, minutes, seconds) = hours_minutes_seconds(self.__app.clock.timer)
-            # self.bkt_curr_time.text = f'{hours}:{minutes}:{seconds}'
+        if self.__app.is_bucket_running():
+            bucket_one = self.__app.bucket_one
+            bucket_two = self.__app.bucket_two
 
-            # Time keeping with only hours
-            time = self.__app.clock.timer / SEC_PER_HOUR
-            self.bkt_curr_time.text = f'{time:.2f} Hrs'
+            if isinstance(bucket_one, Timer):
+                # Time keeping with hours, minutes, and seconds
+                # (hours, minutes, seconds) = hours_minutes_seconds(bucket_one.seconds)
+                # self.bkt_one_time.text = f'{hours}:{minutes}:{seconds}'
+
+                # Time keeping with only hours
+                time = bucket_one.seconds / SEC_PER_HOUR
+                self.bkt_one_time.text = f'{time:.2f} Hrs'
+
+            if isinstance(bucket_two, Timer):
+                # Time keeping with hours, minutes, and seconds
+                # (hours, minutes, seconds) = hours_minutes_seconds(bucket_two.seconds)
+                # self.bkt_two_time.text = f'{hours}:{minutes}:{seconds}'
+
+                # Time keeping with only hours
+                time = bucket_two.seconds / SEC_PER_HOUR
+                self.bkt_two_time.text = f'{time:.2f} Hrs'
 
         # Handles the clock ui
         now = self.__app.clock.time
@@ -145,23 +153,53 @@ class MainWidget(FloatLayout, AppWidget):
                 self.hide_pause_text()
                 self.show_no_assigned_break_text()
 
-    def _keypad_cancel_callback(self, *args, **kwargs):
-        self.__app.cancel_bucket_name()
-        self.hide_keypad()
-
     def _keypad_enter_callback(self, *args, **kwargs):
-        self.__app.enter_bucket_name()
+        self.__app.enter_bucket_name(self.__keypad.num)
         self.hide_keypad()
 
     def __update_buttons(self):
-        if self.__app.is_bucket_running:
-            self.start_btn.disabled = True
-            self.finish_btn.disabled = False
-            self.cancel_btn.disabled = False
-        else:
+        bucket_one = self.__app.bucket_one
+        bucket_two = self.__app.bucket_two
+
+        if bucket_one is None and bucket_two is None:  # Neither bucket is running
             self.start_btn.disabled = False
             self.finish_btn.disabled = True
             self.cancel_btn.disabled = True
+        elif bucket_one is not None and bucket_two is not None:  # Both buckets are running
+            self.start_btn.disabled = True
+            self.finish_btn.disabled = False
+            self.cancel_btn.disabled = False
+        else:  # At least one bucket is running
+            self.start_btn.disabled = False
+            self.finish_btn.disabled = False
+            self.cancel_btn.disabled = False
+
+    def __update_current_buckets(self):
+        bucket_one = self.__app.bucket_one
+        bucket_two = self.__app.bucket_two
+        max_name_length = self.__app.max_name_length
+
+        if isinstance(bucket_one, Timer):
+            if len(bucket_one.name) > max_name_length:
+                text = 'PRIORITY 1\n{}...'.format(bucket_one.name[:max_name_length])
+            else:
+                text = 'PRIORITY 1\n{}'.format(bucket_one.name)
+
+            self.bkt_one_name.text = text
+        else:
+            self.bkt_one_name.text = 'PRIORITY 1\n----'
+            self.bkt_one_time.text = '0.00 Hrs'
+
+        if isinstance(bucket_two, Timer):
+            if len(bucket_two.name) > max_name_length:
+                text = 'PRIORITY 2\n{}...'.format(bucket_two.name[:max_name_length])
+            else:
+                text = 'PRIORITY 2\n{}'.format(bucket_two.name)
+
+            self.bkt_two_name.text = text
+        else:
+            self.bkt_two_name.text = 'PRIORITY 2\n----'
+            self.bkt_two_time.text = '0.00 Hrs'
 
     def __update_table(self):
         n = 5  # TODO: Make N a config setting and allow labels_bkt and labels_time to scale to it.
@@ -179,6 +217,9 @@ class MainWidget(FloatLayout, AppWidget):
                 bkt = log[i]
                 name = str(bkt[0])
                 time = int(bkt[2])
+
+                if len(name) > self.__app.max_name_length:
+                    name = '{}...'.format(name[:self.__app.max_name_length])
 
                 count += 1
                 time_sum += time
